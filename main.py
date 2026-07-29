@@ -14,8 +14,15 @@ app = FastAPI(
     description="A global-ready League of Legends performance intelligence app.",
     version="1.1.0",
 )
-app.mount("/css", StaticFiles(directory=PUBLIC_DIR / "css"), name="css")
-app.mount("/js", StaticFiles(directory=PUBLIC_DIR / "js"), name="js")
+
+# Vercel serves files under public/ from its CDN. These mounts keep local
+# uvicorn development working and remain safe if a deployment bundle omits
+# static directories.
+if (PUBLIC_DIR / "css").is_dir():
+    app.mount("/css", StaticFiles(directory=PUBLIC_DIR / "css"), name="css")
+if (PUBLIC_DIR / "js").is_dir():
+    app.mount("/js", StaticFiles(directory=PUBLIC_DIR / "js"), name="js")
+
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
