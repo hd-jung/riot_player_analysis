@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Metrics Lab — Rift Signal{% endblock %}
+
+{% block content %}
+<section class="metrics-hero">
+  <div>
+    <div class="eyebrow"><span>03</span> MODEL TRANSPARENCY</div>
+    <h1>Metrics<br><em>without mystery.</em></h1>
+  </div>
+  <div class="metrics-intro">
+    <p>
+      A transparent view of recommendation coverage across
+      <strong>{{ "{:,}".format(benchmark.rows) }}</strong> high-rank match records.
+    </p>
+    <span class="dataset-stamp">DATASET / KR HIGH-RANK / V1.1</span>
+  </div>
+</section>
+
+<section class="benchmark-strip">
+  <article>
+    <span>HR@10</span>
+    <strong>{{ benchmark.hr10 }}<small>%</small></strong>
+    <p>How often the played champion appears in the role-level top ten.</p>
+  </article>
+  <article class="accent">
+    <span>nDCG@10</span>
+    <strong>{{ benchmark.ndcg10 }}<small>%</small></strong>
+    <p>How strongly each hit is rewarded based on its recommendation rank.</p>
+  </article>
+  <article>
+    <span>UNIQUE PICKS</span>
+    <strong>{{ benchmark.champions }}</strong>
+    <p>Champion coverage represented in the current reference dataset.</p>
+  </article>
+  <article>
+    <span>MATCHES</span>
+    <strong>{{ benchmark.matches }}</strong>
+    <p>Distinct match samples used to build this baseline view.</p>
+  </article>
+</section>
+
+<section class="metrics-content">
+  <div class="role-benchmark panel">
+    <div class="panel-heading">
+      <div><span class="panel-kicker">ROLE COVERAGE</span><h2>Hit rate by lane</h2></div>
+      <span class="mono">TOP 10 / MIN 10 GAMES</span>
+    </div>
+    <div class="benchmark-rows">
+      {% for role in benchmark.roles %}
+      <div class="benchmark-row">
+        <div class="benchmark-label">
+          <strong>{{ role.role }}</strong>
+          <span>{{ role.games }} samples · {{ role.signal }}</span>
+        </div>
+        <div class="benchmark-track"><i style="width: {{ role.hit_rate }}%"></i></div>
+        <b>{{ role.hit_rate }}%</b>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="method-panel">
+    <span class="feature-index">METHOD / 01</span>
+    <h2>A readable baseline, not a black box.</h2>
+    <p>
+      Champions are ranked by win rate within each role after a minimum sample
+      filter. HR@10 checks coverage. nDCG@10 rewards stronger rank positions.
+    </p>
+    <div class="formula">
+      <span>HR@K</span>
+      <strong>hits ÷ evaluated matches</strong>
+    </div>
+    <div class="formula">
+      <span>nDCG@K</span>
+      <strong>discounted gain ÷ ideal gain</strong>
+    </div>
+  </div>
+</section>
+
+<section class="top-picks-section">
+  <div class="section-heading compact">
+    <div class="eyebrow"><span>04</span> ROLE LEADERS</div>
+    <h2>Current top signals.</h2>
+  </div>
+  <div class="role-tabs">
+    {% for role, picks in benchmark.top_picks.items() %}
+    <article class="role-picks">
+      <div class="role-picks-head"><span>{{ role }}</span><small>TOP 5</small></div>
+      <ol>
+        {% for pick in picks %}
+        <li>
+          <span class="rank">{{ "%02d"|format(loop.index) }}</span>
+          <strong>{{ pick.champion }}</strong>
+          <span>{{ pick.games }}G</span>
+          <b>{{ pick.win_rate }}%</b>
+        </li>
+        {% endfor %}
+      </ol>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

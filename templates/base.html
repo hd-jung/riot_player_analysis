@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b14">
+  <meta name="description" content="Rift Signal turns recent League of Legends matches into clear performance signals.">
+  <title>{% block title %}Rift Signal{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css?v=1.1.2">
+  {% block head %}{% endblock %}
+</head>
+<body class="page-{{ page }}">
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Rift Signal home">
+      <span class="brand-mark" aria-hidden="true">R//S</span>
+      <span class="brand-name">RIFT SIGNAL</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">
+      <span></span><span></span>
+      <span class="sr-only">Toggle navigation</span>
+    </button>
+    <nav class="main-nav" id="main-nav" aria-label="Primary navigation">
+      <a href="/" class="{% if page == 'home' %}active{% endif %}">Home</a>
+      <a href="/analysis" class="{% if page == 'analysis' %}active{% endif %}">Player Analysis</a>
+      <a href="/metrics" class="{% if page == 'metrics' %}active{% endif %}">Metrics Lab</a>
+    </nav>
+    <a class="header-cta" href="/analysis">Analyze player <span>↗</span></a>
+  </header>
+
+  <main>{% block content %}{% endblock %}</main>
+
+  <footer class="site-footer">
+    <div>
+      <span class="brand-name">RIFT SIGNAL</span>
+      <p>Performance intelligence for the next queue.</p>
+    </div>
+    <div class="footer-meta">
+      <span>Built for global players</span>
+      <span>v1.1 / FastAPI</span>
+    </div>
+  </footer>
+
+  <script src="/js/app.js?v=1.1.2" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

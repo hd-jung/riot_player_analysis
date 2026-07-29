@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Player Analysis — Rift Signal{% endblock %}
+
+{% block content %}
+<section class="analysis-shell" id="analysis-app" data-riot-id="{{ riot_id }}" data-count="{{ count }}">
+  <aside class="analysis-sidebar">
+    <div class="eyebrow"><span>LIVE</span> PLAYER LOOKUP</div>
+    <h1>Player<br>Analysis</h1>
+    <p>Read recent ranked performance and convert it into a clear next-pick signal.</p>
+    <form id="analysis-search" class="sidebar-form">
+      <label for="analysis-riot-id">Riot ID</label>
+      <input id="analysis-riot-id" value="{{ riot_id }}" required>
+      <label for="match-count">Match sample</label>
+      <select id="match-count">
+        {% for option in [5, 10, 15, 20] %}
+          <option value="{{ option }}" {% if option == count %}selected{% endif %}>Last {{ option }} games</option>
+        {% endfor %}
+      </select>
+      <button type="submit">REFRESH SIGNAL <span>→</span></button>
+    </form>
+    <div class="sidebar-note">
+      <span>DATA SOURCE</span>
+      <strong id="data-source">Checking…</strong>
+      <small>Cached results load instantly. Live analysis refreshes through Riot Games.</small>
+    </div>
+  </aside>
+
+  <div class="analysis-main">
+    <div class="analysis-header">
+      <div>
+        <div class="eyebrow"><span>RANKED</span> PERFORMANCE BRIEF</div>
+        <h2 id="player-name">Loading signal…</h2>
+        <p id="analysis-subtitle">Building your recent-match profile.</p>
+      </div>
+      <div class="analysis-status" id="analysis-status">
+        <i></i><span>SYNCING</span>
+      </div>
+    </div>
+
+    <div class="loading-state" id="loading-state">
+      <div class="loading-orbit"><span></span></div>
+      <strong>Reading the last matches</strong>
+      <p>Champion form, role split, and performance signal are being calculated.</p>
+    </div>
+
+    <div class="error-state" id="error-state" hidden>
+      <span>!</span>
+      <div>
+        <strong>Signal interrupted</strong>
+        <p id="error-message"></p>
+      </div>
+    </div>
+
+    <div id="analysis-results" hidden>
+      <div class="metric-grid" id="summary-metrics"></div>
+
+      <div class="dashboard-grid">
+        <section class="panel role-panel">
+          <div class="panel-heading">
+            <div><span class="panel-kicker">ROLE PROFILE</span><h3>Lane momentum</h3></div>
+            <span class="mono" id="favorite-role">—</span>
+          </div>
+          <div class="role-bars" id="role-bars"></div>
+        </section>
+
+        <section class="panel recommendation-panel">
+          <div class="panel-heading">
+            <div><span class="panel-kicker">NEXT QUEUE</span><h3>Pick signals</h3></div>
+            <span class="pulse-label">LIVE</span>
+          </div>
+          <div class="recommendation-list" id="recommendations"></div>
+        </section>
+      </div>
+
+      <section class="panel champion-panel">
+        <div class="panel-heading">
+          <div><span class="panel-kicker">CHAMPION POOL</span><h3>Performance by pick</h3></div>
+          <span class="mono" id="champion-count">—</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Champion</th><th>Games</th><th>Win rate</th><th>Avg KDA</th><th>Avg CS</th></tr></thead>
+            <tbody id="champion-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel matches-panel">
+        <div class="panel-heading">
+          <div><span class="panel-kicker">RECENT FORM</span><h3>Match timeline</h3></div>
+          <span class="mono">NEWEST FIRST</span>
+        </div>
+        <div class="match-list" id="recent-matches"></div>
+      </section>
+    </div>
+  </div>
+</section>
+{% endblock %}
