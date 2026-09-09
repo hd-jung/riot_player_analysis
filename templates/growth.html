@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Growth History — Rift Signal{% endblock %}
+
+{% block content %}
+<section class="growth-shell" id="growth-app" data-locale="en">
+  <header class="growth-hero">
+    <div>
+      <div class="eyebrow"><span>TRAIN · TRACK · ADAPT</span> PERSONAL PROGRESS</div>
+      <h1>Growth<br><em>History.</em></h1>
+      <p>See whether completed practice turns into measurable ranked improvement. Your history stays in this browser.</p>
+    </div>
+    <div class="growth-profile">
+      <label for="growth-player">PLAYER PROFILE</label>
+      <select id="growth-player"></select>
+      <span id="growth-last-sync">NO ANALYSIS SAVED</span>
+    </div>
+  </header>
+
+  <div class="growth-empty" id="growth-empty" hidden>
+    <span>01</span>
+    <h2>Start with one player analysis.</h2>
+    <p>Your first analysis becomes the baseline for the calendar and trend report.</p>
+    <a href="/analysis">BUILD MY BASELINE →</a>
+  </div>
+
+  <div class="growth-dashboard" id="growth-dashboard" hidden>
+    <section class="growth-overview">
+      <article><span>ROUTINE DAYS</span><strong id="growth-completed">0</strong><small>completed</small></article>
+      <article><span>ANALYSIS CHECKPOINTS</span><strong id="growth-checkpoints">0</strong><small>saved</small></article>
+      <article><span>CURRENT STREAK</span><strong id="growth-streak">0</strong><small>days</small></article>
+      <article class="accent"><span>OVERALL SIGNAL</span><strong id="growth-signal">BASELINE</strong><small id="growth-signal-detail">Keep training</small></article>
+    </section>
+
+    <div class="growth-layout">
+      <section class="panel calendar-panel">
+        <div class="panel-heading">
+          <div><span class="panel-kicker">ACTIVITY CALENDAR</span><h2>Practice consistency</h2></div>
+          <div class="calendar-controls"><button id="calendar-prev" type="button" aria-label="Previous month">←</button><strong id="calendar-month"></strong><button id="calendar-next" type="button" aria-label="Next month">→</button></div>
+        </div>
+        <div class="calendar-weekdays"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div>
+        <div class="growth-calendar" id="growth-calendar"></div>
+        <div class="calendar-legend"><span><i class="practice"></i>Practice</span><span><i class="analysis"></i>Analysis</span><span><i class="both"></i>Both</span></div>
+        <div class="calendar-detail" id="calendar-detail">Select a date to see its activity.</div>
+      </section>
+
+      <aside class="panel insight-panel">
+        <span class="panel-kicker">WEEKLY COACH NOTE</span>
+        <h2 id="growth-insight-title">Build your baseline</h2>
+        <p id="growth-insight-copy">Complete the routine and analyze again to unlock a progress insight.</p>
+        <div class="insight-next"><span>NEXT FOCUS</span><strong id="growth-next-focus">Complete Day 1</strong></div>
+        <a href="/analysis" id="growth-analyze-link">CONTINUE TRAINING <span>→</span></a>
+      </aside>
+    </div>
+
+    <section class="trend-section">
+      <div class="section-heading compact">
+        <div><span class="panel-kicker">FIRST → LATEST</span><h2>Performance trend</h2></div>
+        <p>Each point is a saved recent-match analysis. Direction matters more than one isolated game.</p>
+      </div>
+      <div class="trend-grid" id="trend-grid"></div>
+    </section>
+
+    <section class="panel checkpoint-panel">
+      <div class="panel-heading">
+        <div><span class="panel-kicker">CHECKPOINT LOG</span><h2>Analysis history</h2></div>
+        <span class="mono" id="checkpoint-count"></span>
+      </div>
+      <div class="checkpoint-list" id="checkpoint-list"></div>
+    </section>
+  </div>
+</section>
+{% endblock %}
