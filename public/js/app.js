@@ -555,19 +555,59 @@ if (growthApp) {
       const activity = activities[key];
       const kind = activity ? (activity.practice.length && activity.analysis.length ? "both" : activity.practice.length ? "practice" : "analysis") : "";
       const today = key === dayKey(new Date()) ? " today" : "";
-      cells.push(`<button type="button" class="calendar-day ${kind}${today}" data-calendar-day="${key}"><span>${day}</span>${activity ? `<i>${activity.practice.length ? `${activity.practice.length}D` : `${activity.analysis.length}A`}</i>` : ""}</button>`);
+      const activityLabel = activity
+        ? `${activity.practice.length} practice, ${activity.analysis.length} analysis`
+        : "No saved activity";
+      cells.push(`<button type="button" class="calendar-day ${kind}${today}" data-calendar-day="${key}" aria-pressed="false" aria-label="${key}: ${activityLabel}"><span>${day}</span>${activity ? `<i>${activity.practice.length ? `${activity.practice.length}D` : `${activity.analysis.length}A`}</i>` : ""}</button>`);
     }
     document.querySelector("#growth-calendar").innerHTML = cells.join("");
-    document.querySelectorAll("[data-calendar-day]").forEach((button) => {
-      button.addEventListener("click", () => {
-        document.querySelectorAll(".calendar-day.selected").forEach((item) => item.classList.remove("selected"));
-        button.classList.add("selected");
-        const activity = activities[button.dataset.calendarDay];
-        document.querySelector("#calendar-detail").innerHTML = activity
-          ? `<strong>${button.dataset.calendarDay}</strong><span>${activity.practice.length} practice day${activity.practice.length === 1 ? "" : "s"} completed · ${activity.analysis.length} analysis checkpoint${activity.analysis.length === 1 ? "" : "s"}</span>`
-          : `<strong>${button.dataset.calendarDay}</strong><span>No saved activity.</span>`;
+    const buttons = [...document.querySelectorAll("[data-calendar-day]")];
+    const showCalendarDetail = (button) => {
+      buttons.forEach((item) => {
+        item.classList.remove("selected");
+        item.setAttribute("aria-pressed", "false");
       });
-    });
+      button.classList.add("selected");
+      button.setAttribute("aria-pressed", "true");
+
+      const key = button.dataset.calendarDay;
+      const activity = activities[key];
+      const dateLabel = new Intl.DateTimeFormat("en", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(new Date(`${key}T12:00:00`));
+      const practiceEvents = (activity?.practice || []).map((item) => {
+        const completedAt = item.timestamp
+          ? new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(item.timestamp))
+          : "Saved completion";
+        return `<article class="calendar-event"><span class="calendar-event-icon practice">✓</span><div><strong>Day ${item.day || "–"} · ${escapeGrowthHtml(item.task || "Practice routine")}</strong><small>Completed at ${completedAt}</small></div></article>`;
+      });
+      const analysisEvents = (activity?.analysis || []).map((item) => `
+        <article class="calendar-event analysis-event">
+          <span class="calendar-event-icon analysis">↗</span>
+          <div><strong>${item.games} match analysis checkpoint</strong><small>${escapeGrowthHtml(item.role || "Role not set")} · ${escapeGrowthHtml(item.source || "Riot API")}</small></div>
+          <div class="calendar-event-metrics"><span>KDA <b>${item.metrics.avg_kda}</b></span><span>CS/M <b>${item.metrics.avg_cs_min}</b></span><span>DEATHS <b>${item.metrics.avg_deaths}</b></span><span>WR <b>${item.metrics.win_rate}%</b></span></div>
+        </article>`);
+      const badges = [];
+      if (practiceEvents.length) badges.push(`<span class="practice">${practiceEvents.length} PRACTICE</span>`);
+      if (analysisEvents.length) badges.push(`<span class="analysis">${analysisEvents.length} ANALYSIS</span>`);
+      const hasActivity = practiceEvents.length || analysisEvents.length;
+      const detail = document.querySelector("#calendar-detail");
+      detail.innerHTML = `
+        <div class="calendar-detail-head">
+          <div><span>SELECTED DATE</span><strong>${dateLabel}</strong></div>
+          <div class="calendar-detail-badges">${hasActivity ? badges.join("") : '<span class="empty">NO ACTIVITY</span>'}</div>
+        </div>
+        <div class="calendar-detail-events">${hasActivity ? [...practiceEvents, ...analysisEvents].join("") : '<p class="calendar-no-activity">No practice or analysis was saved on this date. Choose a highlighted day to review an activity.</p>'}</div>`;
+      detail.classList.remove("pulse");
+      void detail.offsetWidth;
+      detail.classList.add("pulse");
+    };
+    buttons.forEach((button) => button.addEventListener("click", () => showCalendarDetail(button)));
+
+    const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}-`;
+    const latestActiveKey = Object.keys(activities).filter((key) => key.startsWith(monthPrefix)).sort().at(-1);
+    const initialButton = buttons.find((button) => button.dataset.calendarDay === latestActiveKey)
+      || buttons.find((button) => button.classList.contains("today"))
+      || buttons[0];
+    if (initialButton) showCalendarDetail(initialButton);
   };
   const renderGrowth = () => {
     const snapshots = history.filter((item) => item.riotId.toLowerCase() === activePlayer.toLowerCase()).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
