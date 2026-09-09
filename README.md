@@ -1,6 +1,21 @@
-# Rift Signal v1.1
+# Rift Signal v1.2
 
-FastAPI 기반 League of Legends 플레이어 분석 서비스입니다. 아래 절차는 모두 VS Code 안에서 진행할 수 있습니다.
+FastAPI 기반 League of Legends 개인 훈련 루틴 서비스입니다. 최근 경기와 같은 주 역할의 KR 최상위 티어 표본을 비교해 우선 과제를 찾고, 실행 가능한 7일 루틴을 만듭니다. 아래 절차는 모두 VS Code 안에서 진행할 수 있습니다.
+
+- GitHub: <https://github.com/hd-jung/riot_player_analysis>
+- Vercel: <https://riot-player-analysis.vercel.app>
+
+## 서비스가 만드는 것
+
+Riot ID를 입력하면 최근 경기에서 승률, KDA, 분당 CS, 평균 데스를 계산합니다. 같은 주 역할의 KR Master·Grandmaster·Challenger 표본과 비교한 뒤 격차가 큰 항목을 우선순위로 정해 다음 내용을 제공합니다.
+
+- 개인별 핵심 개선 과제 최대 3개
+- 매일 할 일과 측정 목표가 있는 7일 훈련 일정
+- 추천 챔피언을 활용한 집중 랭크 세션
+- 7일차 재측정 및 다음 주 조정 안내
+- 브라우저에만 저장되는 일자별 완료 체크
+
+기준 데이터는 프로 선수 경기 데이터가 아니며 코칭 결과를 보장하지 않습니다. 현재 포함된 정적 최상위 티어 표본을 방향성 기준으로 사용하고, 사용자 표본이 적을 때는 신뢰도를 `early` 또는 `medium`으로 표시합니다.
 
 ## 1. VS Code에서 프로젝트 열기
 
@@ -276,7 +291,7 @@ Riot 개발 키는 24시간짜리 테스트용입니다. 서비스를 계속 공
 ## 주요 페이지
 
 - `/`: 영문 랜딩 페이지
-- `/analysis`: Riot ID 플레이어 분석
+- `/analysis`: Riot ID 기반 비교 분석 및 7일 훈련 루틴
 - `/metrics`: 추천 지표 벤치마크
 - `/docs`: FastAPI API 문서
 

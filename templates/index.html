@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Rift Signal — Own the next match{% endblock %}
+{% block title %}Rift Signal — Your personal LoL training coach{% endblock %}
 
 {% block content %}
 <section class="hero">
   <div class="hero-copy">
     <div class="eyebrow"><span>01</span> PLAYER INTELLIGENCE / LIVE</div>
-    <h1>Know your lane.<br><em>Own the next match.</em></h1>
+    <h1>Measure the gap.<br><em>Train with purpose.</em></h1>
     <p class="hero-lede">
-      Turn recent ranked games into a sharp read on champion form, role momentum,
-      and the picks worth carrying into your next queue.
+      Compare your recent ranked games with KR high-rank role benchmarks, then
+      turn the biggest performance gaps into a focused seven-day training routine.
     </p>
 
     <form class="signal-search" id="hero-search">
@@ -16,7 +16,7 @@
       <div class="search-control">
         <span class="search-prefix" aria-hidden="true">#</span>
         <input id="hero-riot-id" name="riot_id" value="Hide on bush#KR1" autocomplete="off" required>
-        <button type="submit">RUN ANALYSIS <span>→</span></button>
+        <button type="submit">BUILD MY ROUTINE <span>→</span></button>
       </div>
       <p class="input-hint">Use the format GameName#Tag · KR, JP, and SEA routing ready</p>
     </form>
@@ -69,9 +69,9 @@
 <section class="ticker" aria-label="Product capabilities">
   <div>
     <span>LIVE RIOT DATA</span><b>✦</b>
-    <span>CHAMPION FORM</span><b>✦</b>
-    <span>ROLE MOMENTUM</span><b>✦</b>
-    <span>GLOBAL BENCHMARKS</span><b>✦</b>
+    <span>HIGH-RANK GAP</span><b>✦</b>
+    <span>7-DAY ROUTINE</span><b>✦</b>
+    <span>MEASURABLE PROGRESS</span><b>✦</b>
     <span>LIVE RIOT DATA</span><b>✦</b>
     <span>CHAMPION FORM</span>
   </div>
@@ -80,15 +80,15 @@
 <section class="feature-section">
   <div class="section-heading">
     <div class="eyebrow"><span>02</span> THE SIGNAL STACK</div>
-    <h2>One screen.<br>Three decisive reads.</h2>
-    <p>No spreadsheet fog. Just the patterns that should change what you queue next.</p>
+    <h2>One analysis.<br>A routine you can follow.</h2>
+    <p>See the performance gap, get focused drills, and check off each training day.</p>
   </div>
   <div class="feature-grid">
     <article class="feature-card feature-primary">
       <span class="feature-index">A / 01</span>
       <div class="feature-icon">↗</div>
-      <h3>Form, without the noise.</h3>
-      <p>See your win rate, KDA, CS pace, and recent results in one high-signal view.</p>
+      <h3>Benchmark the right gaps.</h3>
+      <p>Compare win rate, KDA, CS pace, and survival with players in your high-rank role cohort.</p>
       <div class="mini-chart" aria-hidden="true">
         <i style="--v: 34%"></i><i style="--v: 52%"></i><i style="--v: 43%"></i>
         <i style="--v: 76%"></i><i style="--v: 64%"></i><i style="--v: 92%"></i>
@@ -97,8 +97,8 @@
     <article class="feature-card">
       <span class="feature-index">B / 02</span>
       <div class="feature-icon">◎</div>
-      <h3>Champion signals.</h3>
-      <p>Find the comfort picks delivering now—and the ones that need a bigger sample.</p>
+      <h3>Train with a narrow pool.</h3>
+      <p>Choose a current comfort pick and keep the weekly practice block measurable.</p>
       <ul class="signal-list">
         <li><span>AHRI</span><b>68%</b></li>
         <li><span>SYNDRA</span><b>61%</b></li>
@@ -108,8 +108,8 @@
     <article class="feature-card">
       <span class="feature-index">C / 03</span>
       <div class="feature-icon">⌁</div>
-      <h3>Global context.</h3>
-      <p>Compare role-level hit rate and recommendation quality across high-rank data.</p>
+      <h3>Seven days, one feedback loop.</h3>
+      <p>Complete daily drills, re-analyze on Day 7, and adjust the next routine from the new gaps.</p>
       <a href="/metrics" class="text-link">OPEN METRICS LAB <span>→</span></a>
     </article>
   </div>
@@ -118,8 +118,8 @@
 <section class="closing-cta">
   <div>
     <div class="eyebrow"><span>03</span> READY CHECK</div>
-    <h2>Your next queue starts with a better read.</h2>
+    <h2>Your next level starts with a routine.</h2>
   </div>
-  <a href="/analysis">FIND MY SIGNAL <span>↗</span></a>
+  <a href="/analysis">BUILD MY ROUTINE <span>↗</span></a>
 </section>
 {% endblock %}

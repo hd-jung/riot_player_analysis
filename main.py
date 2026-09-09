@@ -11,8 +11,8 @@ from app.riot import RiotAPIError, RiotClient, read_cache, split_riot_id
 
 app = FastAPI(
     title="Rift Signal",
-    description="A global-ready League of Legends performance intelligence app.",
-    version="1.1.0",
+    description="A high-rank benchmark and personal League of Legends training routine app.",
+    version="1.2.0",
 )
 
 # Vercel serves files under public/ from its CDN. These mounts keep local

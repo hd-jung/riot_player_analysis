@@ -6,7 +6,7 @@
   <aside class="analysis-sidebar">
     <div class="eyebrow"><span>LIVE</span> PLAYER LOOKUP</div>
     <h1>Player<br>Analysis</h1>
-    <p>Read recent ranked performance and convert it into a clear next-pick signal.</p>
+    <p>Compare recent ranked performance with your high-rank role cohort and build a seven-day practice plan.</p>
     <form id="analysis-search" class="sidebar-form">
       <label for="analysis-riot-id">Riot ID</label>
       <input id="analysis-riot-id" value="{{ riot_id }}" required>
@@ -53,6 +53,30 @@
 
     <div id="analysis-results" hidden>
       <div class="metric-grid" id="summary-metrics"></div>
+
+      <section class="panel benchmark-panel">
+        <div class="panel-heading">
+          <div><span class="panel-kicker">HIGH-RANK GAP</span><h3>Your role benchmark</h3></div>
+          <span class="mono" id="benchmark-cohort">—</span>
+        </div>
+        <p class="benchmark-disclaimer" id="benchmark-disclaimer"></p>
+        <div class="player-comparison" id="player-comparison"></div>
+      </section>
+
+      <section class="panel routine-panel">
+        <div class="panel-heading">
+          <div><span class="panel-kicker">PERSONAL COACH</span><h3 id="routine-title">7-day improvement routine</h3></div>
+          <span class="mono" id="routine-progress">0 / 7 COMPLETE</span>
+        </div>
+        <div class="routine-summary">
+          <div><span>PRIMARY ROLE</span><strong id="routine-role">—</strong></div>
+          <div><span>PRACTICE PICK</span><strong id="routine-pick">—</strong></div>
+          <div><span>RE-TEST</span><strong>DAY 7</strong></div>
+        </div>
+        <div class="focus-grid" id="focus-areas"></div>
+        <div class="routine-days" id="routine-days"></div>
+        <p class="routine-storage-note">Completion is saved only in this browser. Re-run analysis after Day 7 to measure the new gaps.</p>
+      </section>
 
       <div class="dashboard-grid">
         <section class="panel role-panel">
