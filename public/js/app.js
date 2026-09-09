@@ -542,7 +542,7 @@ if (growthApp) {
     }).join(" ");
     return `<svg viewBox="0 0 ${width} ${height}" aria-hidden="true"><polyline points="${points}"/><circle cx="${points.split(" ").at(-1).split(",")[0]}" cy="${points.split(" ").at(-1).split(",")[1]}" r="4"/></svg>`;
   };
-  const renderCalendar = (activities) => {
+  const renderCalendar = (activities, onSelect) => {
     const year = calendarDate.getFullYear();
     const month = calendarDate.getMonth();
     document.querySelector("#calendar-month").textContent = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(calendarDate);
@@ -599,6 +599,7 @@ if (growthApp) {
       detail.classList.remove("pulse");
       void detail.offsetWidth;
       detail.classList.add("pulse");
+      onSelect?.(key);
     };
     buttons.forEach((button) => button.addEventListener("click", () => showCalendarDetail(button)));
 
@@ -646,14 +647,77 @@ if (growthApp) {
     document.querySelector("#growth-signal").textContent = signal;
     document.querySelector("#growth-signal-detail").textContent = comparable.length < 2 ? `Need another ${latest.games}-game sample` : `${averageSignal >= 0 ? "+" : ""}${averageSignal.toFixed(1)}% combined change`;
 
-    const best = [...changes].sort((a, b) => b.percent - a.percent)[0];
-    document.querySelector("#growth-insight-title").textContent = comparable.length < 2 ? "Comparable baseline saved" : best.percent > 0 ? `${best.label} leads your growth` : "Consistency is the next win";
-    document.querySelector("#growth-insight-copy").textContent = comparable.length < 2
-      ? `Complete the routine, then analyze the same ${latest.games}-game sample size again for a fair before-and-after signal.`
-      : best.percent > 0
-        ? `${best.label} improved by ${Math.abs(best.percent).toFixed(1)}% from your first checkpoint. Keep the strongest habit and protect it in the next block.`
-        : "The latest checkpoint has not moved above the baseline yet. Keep the sample consistent and follow the next focus for another block.";
-    document.querySelector("#growth-next-focus").textContent = latest.focus?.[0] || "Complete the next routine day";
+    const updateCoachNote = (selectedKey) => {
+      const selectedDate = new Date(`${selectedKey}T12:00:00`);
+      const weekStart = new Date(selectedDate);
+      weekStart.setDate(selectedDate.getDate() - ((selectedDate.getDay() + 6) % 7));
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      const weekKeys = Object.keys(activities).filter((key) => {
+        const date = new Date(`${key}T12:00:00`);
+        return date >= weekStart && date <= weekEnd;
+      });
+      const practiceDays = weekKeys.filter((key) => activities[key].practice.length).length;
+      const analysisCount = weekKeys.reduce((sum, key) => sum + activities[key].analysis.length, 0);
+      const selectedActivity = activities[selectedKey] || { practice: [], analysis: [] };
+      const selectedAnalysis = selectedActivity.analysis.at(-1);
+      const selectedPractice = selectedActivity.practice.at(-1);
+      const routineDone = Object.keys(routine.completed || {}).length;
+      const routineTotal = 7;
+      const isToday = selectedKey === dayKey(new Date());
+      const periodFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
+      let title;
+      let copy;
+      let nextFocus;
+
+      if (isToday && routineDone >= routineTotal) {
+        title = "The training block is complete";
+        copy = `All ${routineTotal} routine days are checked. Re-analyze the same ${latest.games}-match sample now to measure what changed.`;
+        nextFocus = "Run the progress re-test";
+      } else if (isToday && selectedPractice) {
+        const remaining = Math.max(routineTotal - routineDone, 0);
+        title = `${routineDone} of ${routineTotal} routine days complete`;
+        copy = `${practiceDays} practice day${practiceDays === 1 ? "" : "s"} logged this week${analysisCount ? ` with ${analysisCount} analysis checkpoint${analysisCount === 1 ? "" : "s"}` : ""}. ${remaining ? `${remaining} session${remaining === 1 ? "" : "s"} remain before the re-test.` : "You are ready to re-test."}`;
+        nextFocus = remaining ? (latest.focus?.[0] || "Complete the next routine day") : "Run the progress re-test";
+      } else if (selectedAnalysis) {
+        const checkpointIndex = snapshots.findIndex((item) => item.id === selectedAnalysis.id);
+        const previous = checkpointIndex > 0 ? snapshots[checkpointIndex - 1] : null;
+        if (previous) {
+          const checkpointChanges = definitions.map((definition) => {
+            const before = previous.metrics[definition.key];
+            const now = selectedAnalysis.metrics[definition.key];
+            const raw = definition.lower ? before - now : now - before;
+            return { ...definition, percent: before ? (raw / before) * 100 : 0 };
+          });
+          const strongest = checkpointChanges.sort((a, b) => b.percent - a.percent)[0];
+          title = `${strongest.label} led this checkpoint`;
+          copy = `${strongest.label} moved ${strongest.percent >= 0 ? "+" : ""}${strongest.percent.toFixed(1)}% versus the previous analysis. This week also contains ${practiceDays} practice day${practiceDays === 1 ? "" : "s"}.`;
+        } else {
+          title = "Your baseline checkpoint";
+          copy = `This analysis started the progress record. ${practiceDays} practice day${practiceDays === 1 ? "" : "s"} followed in the selected week.`;
+        }
+        nextFocus = selectedAnalysis.focus?.[0] || latest.focus?.[0] || "Keep the next practice focused";
+      } else if (selectedPractice) {
+        title = practiceDays >= 4 ? "Consistency built momentum" : "A focused practice day is logged";
+        copy = `${practiceDays} day${practiceDays === 1 ? "" : "s"} of practice were completed this week. ${analysisCount ? `${analysisCount} analysis checkpoint${analysisCount === 1 ? "" : "s"} captured the result.` : "Complete the block, then analyze again to measure the result."}`;
+        nextFocus = selectedPractice.task || latest.focus?.[0] || "Protect the next practice day";
+      } else {
+        title = practiceDays ? "An open day inside an active week" : "No training signal this week";
+        copy = practiceDays
+          ? `You still logged ${practiceDays} practice day${practiceDays === 1 ? "" : "s"} this week. Use the open day for recovery or the next focused session.`
+          : "No practice or analysis is saved in this week. One short, deliberate session is enough to restart the signal.";
+        nextFocus = "Complete one focused session";
+      }
+
+      document.querySelector("#growth-insight-period").textContent = `${periodFormat.format(weekStart)} — ${periodFormat.format(weekEnd)} · ${practiceDays} PRACTICE / ${analysisCount} ANALYSIS`;
+      document.querySelector("#growth-insight-title").textContent = title;
+      document.querySelector("#growth-insight-copy").textContent = copy;
+      document.querySelector("#growth-next-focus").textContent = nextFocus;
+      const panel = document.querySelector(".insight-panel");
+      panel.classList.remove("refresh");
+      void panel.offsetWidth;
+      panel.classList.add("refresh");
+    };
     document.querySelector("#trend-grid").innerHTML = changes.map((item) => {
       const positive = item.percent > .5;
       const negative = item.percent < -.5;
@@ -661,7 +725,7 @@ if (growthApp) {
     }).join("");
     document.querySelector("#checkpoint-count").textContent = `${snapshots.length} SAVED`;
     document.querySelector("#checkpoint-list").innerHTML = [...snapshots].reverse().slice(0, 8).map((item, index) => `<article><span class="checkpoint-index">${String(snapshots.length - index).padStart(2, "0")}</span><div><strong>${formatDate(item.timestamp)}</strong><small>${escapeGrowthHtml(item.role)} · ${item.games} games · ${escapeGrowthHtml(item.source)}</small></div><span>KDA <b>${item.metrics.avg_kda}</b></span><span>CS/M <b>${item.metrics.avg_cs_min}</b></span><span>DEATHS <b>${item.metrics.avg_deaths}</b></span><span>WR <b>${item.metrics.win_rate}%</b></span></article>`).join("");
-    renderCalendar(activities);
+    renderCalendar(activities, updateCoachNote);
   };
 
   if (!profiles.length) {
