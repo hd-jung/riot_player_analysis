@@ -1734,6 +1734,16 @@ tr:last-child td { border-bottom: 0; }
   :root { --site-width: calc(100% - 28px); }
   .site-header { height: 72px; }
   .brand-mark { width: 36px; height: 36px; }
+  .main-nav.open {
+    top: 71px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    padding: 10px;
+    box-shadow: 0 18px 38px rgba(0, 0, 0, .42);
+  }
+  .main-nav.open a { padding: 15px 14px; }
   .hero { min-height: auto; padding: 60px 0 70px; gap: 30px; }
   .hero h1, .metrics-hero h1 { font-size: clamp(52px, 16vw, 76px); }
   .hero-lede { width: 100%; font-size: 15px; }
@@ -1762,6 +1772,7 @@ tr:last-child td { border-bottom: 0; }
   .sidebar-note { margin-top: 28px; }
   .analysis-main { padding: 38px 14px 70px; }
   .analysis-header { display: block; }
+  .analysis-header h2 { font-size: clamp(30px, 10vw, 42px); overflow-wrap: anywhere; }
   .analysis-status { margin-top: 20px; }
   .metric-grid { grid-template-columns: 1fr 1fr; }
   .metric-card { min-height: 125px; padding: 17px; }

@@ -1,4 +1,4 @@
-# Rift Signal v1.3.5
+# Rift Signal v1.3.6
 
 FastAPI 기반 League of Legends 개인 훈련 루틴 서비스입니다. 최근 경기와 같은 주 역할의 KR 최상위 티어 표본을 비교해 우선 과제를 찾고, 실행 가능한 7일 루틴을 만듭니다. 아래 절차는 모두 VS Code 안에서 진행할 수 있습니다.
 
