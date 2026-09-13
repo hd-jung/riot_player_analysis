@@ -6,7 +6,7 @@
   <aside class="analysis-sidebar">
     <div class="eyebrow"><span>LIVE</span> PLAYER LOOKUP</div>
     <h1>Player<br>Analysis</h1>
-    <p>Read recent ranked performance and convert it into a clear next-pick signal.</p>
+    <p>Compare recent ranked performance with your high-rank role cohort and build a seven-day practice plan.</p>
     <form id="analysis-search" class="sidebar-form">
       <label for="analysis-riot-id">Riot ID</label>
       <input id="analysis-riot-id" value="{{ riot_id }}" required>
@@ -53,6 +53,49 @@
 
     <div id="analysis-results" hidden>
       <div class="metric-grid" id="summary-metrics"></div>
+
+      <section class="panel benchmark-panel">
+        <div class="panel-heading">
+          <div><span class="panel-kicker">HIGH-RANK GAP</span><h3>Your role benchmark</h3></div>
+          <span class="mono" id="benchmark-cohort">—</span>
+        </div>
+        <p class="benchmark-disclaimer" id="benchmark-disclaimer"></p>
+        <div class="player-comparison" id="player-comparison"></div>
+      </section>
+
+      <section class="panel routine-panel">
+        <div class="panel-heading">
+          <div><span class="panel-kicker">PERSONAL COACH</span><h3 id="routine-title">7-day improvement routine</h3></div>
+          <span class="mono" id="routine-progress">0 / 7 COMPLETE</span>
+        </div>
+        <div class="routine-progress-track" aria-label="Routine progress"><i id="routine-progress-fill"></i></div>
+        <section class="next-session" id="next-session">
+          <div>
+            <span id="next-session-kicker">DAY 01 · TODAY'S TRAINING</span>
+            <h4 id="next-session-task">Preparing your first session…</h4>
+            <p id="next-session-detail"></p>
+          </div>
+          <button type="button" id="complete-next-session">MARK COMPLETE <span>→</span></button>
+        </section>
+        <div class="routine-live-stats">
+          <div><span>PROGRESS</span><strong id="routine-percent">0%</strong></div>
+          <div><span>STREAK</span><strong id="routine-streak">0 DAYS</strong></div>
+          <div><span>NEXT RE-TEST</span><strong id="routine-retest">7 DAYS</strong></div>
+        </div>
+        <div class="routine-summary">
+          <div><span>PRIMARY ROLE</span><strong id="routine-role">—</strong></div>
+          <div><span>PRACTICE PICK</span><strong id="routine-pick">—</strong></div>
+          <div><span>RE-TEST</span><strong>DAY 7</strong></div>
+        </div>
+        <div class="focus-grid" id="focus-areas"></div>
+        <div class="routine-days" id="routine-days"></div>
+        <section class="routine-celebration" id="routine-celebration" hidden>
+          <span class="celebration-mark">✓</span>
+          <div><span>WEEK COMPLETE</span><h4>Your seven-day block is finished.</h4><p>Refresh your latest matches and measure what changed.</p></div>
+          <button type="button" id="routine-reanalyze">MEASURE PROGRESS <span>→</span></button>
+        </section>
+        <p class="routine-storage-note">Completion is saved only in this browser. Re-run analysis after Day 7 to measure the new gaps. <a href="/growth">Open growth history →</a></p>
+      </section>
 
       <div class="dashboard-grid">
         <section class="panel role-panel">

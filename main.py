@@ -1,22 +1,35 @@
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
-from app.analytics import analyze_matches, benchmark_context
-from app.config import PUBLIC_DIR, REFERENCE_DATA_DIR, TEMPLATES_DIR, riot_api_key
+from app.analytics import analyze_matches
+from app.config import PUBLIC_DIR, TEMPLATES_DIR, riot_api_key
+from app.demo import demo_match_rows, is_demo_riot_id
 from app.riot import RiotAPIError, RiotClient, read_cache, split_riot_id
 
 
 app = FastAPI(
     title="Rift Signal",
-    description="A global-ready League of Legends performance intelligence app.",
-    version="1.1.0",
+    description="A high-rank benchmark and personal League of Legends training routine app.",
+    version="1.3.6",
 )
-app.mount("/css", StaticFiles(directory=PUBLIC_DIR / "css"), name="css")
-app.mount("/js", StaticFiles(directory=PUBLIC_DIR / "js"), name="js")
+
+# Vercel serves files under public/ from its CDN. These mounts keep local
+# uvicorn development working and remain safe if a deployment bundle omits
+# static directories.
+if (PUBLIC_DIR / "css").is_dir():
+    app.mount("/css", StaticFiles(directory=PUBLIC_DIR / "css"), name="css")
+if (PUBLIC_DIR / "js").is_dir():
+    app.mount("/js", StaticFiles(directory=PUBLIC_DIR / "js"), name="js")
+
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
+
+
+@app.get("/favicon.svg", include_in_schema=False)
+async def favicon():
+    return FileResponse(PUBLIC_DIR / "favicon.svg", media_type="image/svg+xml")
 
 
 class AnalyzeRequest(BaseModel):
@@ -37,7 +50,7 @@ async def home(request: Request):
 @app.get("/analysis", response_class=HTMLResponse)
 async def analysis_page(
     request: Request,
-    riot_id: str = Query(default="Hide on bush#KR1"),
+    riot_id: str = Query(default="dummy_player#KR1"),
     count: int = Query(default=10, ge=3, le=20),
 ):
     return templates.TemplateResponse(
@@ -47,15 +60,18 @@ async def analysis_page(
     )
 
 
-@app.get("/metrics", response_class=HTMLResponse)
-async def metrics_page(request: Request):
-    data_path = REFERENCE_DATA_DIR / "highrank.csv"
-    benchmark = benchmark_context(str(data_path))
+@app.get("/growth", response_class=HTMLResponse)
+async def growth_page(request: Request):
     return templates.TemplateResponse(
         request=request,
-        name="metrics.html",
-        context={"page": "metrics", "benchmark": benchmark},
+        name="growth.html",
+        context={"page": "growth"},
     )
+
+
+@app.get("/metrics", include_in_schema=False)
+async def legacy_metrics_page():
+    return RedirectResponse(url="/growth", status_code=307)
 
 
 @app.get("/api/health")
@@ -73,6 +89,12 @@ async def analyze(payload: AnalyzeRequest):
         game_name, tag_line = split_riot_id(payload.riot_id)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    if is_demo_riot_id(payload.riot_id):
+        result = analyze_matches(demo_match_rows()[:10], "dummy_player#KR1")
+        result["source"] = "demo"
+        result["demo"] = True
+        return result
 
     rows = []
     source = "cache"

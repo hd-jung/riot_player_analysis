@@ -123,6 +123,24 @@ def analyze_matches(rows: list[dict[str, Any]], riot_id: str) -> dict[str, Any]:
             }
         )
 
+    benchmark = _player_benchmark(frame, favorite_role)
+    training_plan = _training_plan(
+        summary={
+            "games": total,
+            "wins": wins,
+            "losses": total - wins,
+            "win_rate": round(wins / total * 100, 1),
+            "avg_kda": round(float(frame["kda"].mean()), 2),
+            "avg_cs": round(float(frame["cs"].mean()), 1),
+            "avg_cs_min": round(float(frame["cs_per_min"].mean()), 1),
+            "avg_deaths": round(float(frame["deaths"].mean()), 1),
+            "favorite_role": favorite_role,
+            "champion_pool": int(frame["champion"].nunique()),
+        },
+        benchmark=benchmark,
+        recommendations=recommendations,
+    )
+
     return {
         "riot_id": riot_id,
         "summary": {
@@ -133,6 +151,7 @@ def analyze_matches(rows: list[dict[str, Any]], riot_id: str) -> dict[str, Any]:
             "avg_kda": round(float(frame["kda"].mean()), 2),
             "avg_cs": round(float(frame["cs"].mean()), 1),
             "avg_cs_min": round(float(frame["cs_per_min"].mean()), 1),
+            "avg_deaths": round(float(frame["deaths"].mean()), 1),
             "favorite_role": favorite_role,
             "champion_pool": int(frame["champion"].nunique()),
         },
@@ -140,6 +159,134 @@ def analyze_matches(rows: list[dict[str, Any]], riot_id: str) -> dict[str, Any]:
         "roles": roles,
         "recommendations": recommendations,
         "recent_matches": recent,
+        "benchmark": benchmark,
+        "training_plan": training_plan,
+    }
+
+
+def _player_benchmark(frame: pd.DataFrame, favorite_role: str) -> dict[str, Any]:
+    """Compare the player with KR high-rank matches in the same primary role."""
+    from .config import REFERENCE_DATA_DIR
+
+    reference = _records_frame(
+        pd.read_csv(REFERENCE_DATA_DIR / "highrank.csv").to_dict("records")
+    )
+    role_reference = reference[reference["role"] == favorite_role]
+    if role_reference.empty:
+        role_reference = reference
+
+    targets = {
+        "win_rate": round(float(role_reference["win"].mean()) * 100, 1),
+        "avg_kda": round(float(role_reference["kda"].median()), 2),
+        "avg_cs_min": round(float(role_reference["cs_per_min"].median()), 1),
+        "avg_deaths": round(float(role_reference["deaths"].median()), 1),
+    }
+    actual = {
+        "win_rate": round(float(frame["win"].mean()) * 100, 1),
+        "avg_kda": round(float(frame["kda"].mean()), 2),
+        "avg_cs_min": round(float(frame["cs_per_min"].mean()), 1),
+        "avg_deaths": round(float(frame["deaths"].mean()), 1),
+    }
+    comparisons = []
+    labels = {
+        "win_rate": ("Win rate", "%", True),
+        "avg_kda": ("Average KDA", "", True),
+        "avg_cs_min": ("CS per minute", "", True),
+        "avg_deaths": ("Deaths per game", "", False),
+    }
+    for key, (label, unit, higher_is_better) in labels.items():
+        player_value = actual[key]
+        target_value = targets[key]
+        raw_gap = (target_value - player_value) if higher_is_better else (player_value - target_value)
+        scale = max(abs(target_value), 1)
+        comparisons.append(
+            {
+                "key": key,
+                "label": label,
+                "unit": unit,
+                "player": player_value,
+                "target": target_value,
+                "gap": round(raw_gap, 2),
+                "gap_score": round(raw_gap / scale * 100, 1),
+                "status": "focus" if raw_gap > scale * 0.08 else "on-track",
+            }
+        )
+    return {
+        "cohort": f"KR high-rank {favorite_role}",
+        "sample_games": int(len(role_reference)),
+        "confidence": "high" if len(frame) >= 15 else "medium" if len(frame) >= 8 else "early",
+        "comparisons": comparisons,
+        "disclaimer": "Directional benchmark from KR Challenger, Grandmaster, and Master ranked matches; not professional-player data.",
+    }
+
+
+def _training_plan(
+    summary: dict[str, Any],
+    benchmark: dict[str, Any],
+    recommendations: list[dict[str, Any]],
+) -> dict[str, Any]:
+    comparison = {item["key"]: item for item in benchmark["comparisons"]}
+    focus = sorted(
+        benchmark["comparisons"], key=lambda item: item["gap_score"], reverse=True
+    )
+    drills = {
+        "avg_cs_min": {
+            "title": "CS consistency",
+            "goal": f"Reach {max(comparison['avg_cs_min']['target'], comparison['avg_cs_min']['player'])} CS/min in two games",
+            "session": "10-minute last-hit drill, then one ranked game with CS checkpoints at 5 and 10 minutes.",
+        },
+        "avg_deaths": {
+            "title": "Survival discipline",
+            "goal": f"Keep deaths at or below {min(comparison['avg_deaths']['target'], comparison['avg_deaths']['player'])} per game",
+            "session": "Review the first death from two losses. Write one preventable cause and one safer alternative for each.",
+        },
+        "avg_kda": {
+            "title": "Fight selection",
+            "goal": f"Reach {max(comparison['avg_kda']['target'], comparison['avg_kda']['player'])} KDA across the session",
+            "session": "Before each fight, check ally numbers, key cooldowns, and the exit route. Review two low-value fights afterward.",
+        },
+        "win_rate": {
+            "title": "Conversion routine",
+            "goal": f"Maintain at least {max(comparison['win_rate']['target'], comparison['win_rate']['player'])}% across the practice block",
+            "session": "After every recall, name the next objective and play the following 90 seconds around it.",
+        },
+    }
+    selected = [item for item in focus if item["gap_score"] > 0][:3]
+    if len(selected) < 3:
+        selected = (selected + [item for item in focus if item not in selected])[:3]
+    primary_pick = recommendations[0]["champion"] if recommendations else "your comfort pick"
+    schedule = []
+    day_names = ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7"]
+    for index, day in enumerate(day_names):
+        if index == 0:
+            task = "Baseline review"
+            detail = f"Review three recent matches and record the first mistake in each. Lock {primary_pick} as the primary practice pick."
+        elif index in {1, 3, 5}:
+            drill = drills[selected[(index // 2) % len(selected)]["key"]]
+            task, detail = drill["title"], drill["session"]
+        elif index in {2, 4}:
+            task = "Focused ranked block"
+            detail = f"Play two ranked games on {primary_pick}. Track only today's target and stop after the block."
+        elif index == 6:
+            task = "Re-test and adjust"
+            detail = "Analyze the newest matches again and compare the four benchmark gaps with Day 1."
+        schedule.append({"day": index + 1, "label": day, "task": task, "detail": detail})
+    return {
+        "title": "7-day improvement routine",
+        "primary_role": summary["favorite_role"],
+        "primary_pick": primary_pick,
+        "focus_areas": [
+            {
+                "key": item["key"],
+                "title": drills[item["key"]]["title"],
+                "goal": drills[item["key"]]["goal"],
+                "priority": index + 1,
+            }
+            for index, item in enumerate(selected)
+        ],
+        "schedule": schedule,
+        "completion_storage": "browser",
+        "retest_after_days": 7,
     }
 
 

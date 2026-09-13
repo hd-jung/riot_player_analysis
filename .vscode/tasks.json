@@ -1,0 +1,93 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Rift Signal: Install dependencies",
+      "type": "shell",
+      "command": "python -m pip install -r requirements.txt",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Rift Signal: Run local server",
+      "type": "shell",
+      "command": "python -m uvicorn main:app --reload",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Rift Signal: Vercel login",
+      "type": "shell",
+      "command": "vercel.cmd login",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "C:\\Program Files\\nodejs;${env:APPDATA}\\npm;${env:PATH}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Rift Signal: Link Vercel project",
+      "type": "shell",
+      "command": "vercel.cmd link",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "C:\\Program Files\\nodejs;${env:APPDATA}\\npm;${env:PATH}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Rift Signal: Add Riot key to Vercel (first time)",
+      "type": "shell",
+      "command": "vercel.cmd env add RIOT_API_KEY production --sensitive",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "C:\\Program Files\\nodejs;${env:APPDATA}\\npm;${env:PATH}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Rift Signal: Update Riot key on Vercel",
+      "type": "shell",
+      "command": "vercel.cmd env update RIOT_API_KEY production --sensitive",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "C:\\Program Files\\nodejs;${env:APPDATA}\\npm;${env:PATH}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Rift Signal: Deploy production",
+      "type": "shell",
+      "command": "vercel.cmd --prod",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "C:\\Program Files\\nodejs;${env:APPDATA}\\npm;${env:PATH}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Rift Signal: Update Riot key and deploy",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Rift Signal: Update Riot key on Vercel",
+        "Rift Signal: Deploy production"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
