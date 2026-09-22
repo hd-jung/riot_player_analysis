@@ -25,6 +25,7 @@ if (heroSearch) {
 
 const GROWTH_HISTORY_KEY = "rift-growth-history:v1";
 const PRACTICE_HISTORY_KEY = "rift-practice-history:v1";
+const IMPORTED_HISTORY_KEY = "rift-imported-history:v1";
 
 // Remove legacy generated snapshots from browsers that visited an older build.
 try {
@@ -94,6 +95,41 @@ const loadGrowthHistory = () => {
   } catch (_) {
     return [];
   }
+};
+
+const loadImportedHistory = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(IMPORTED_HISTORY_KEY) || "[]");
+    return Array.isArray(saved) ? saved : [];
+  } catch (_) {
+    return [];
+  }
+};
+
+const saveImportedHistory = (data) => {
+  const profile = data.historical_profile;
+  if (!profile?.weekly?.length) return;
+  const existing = loadImportedHistory().filter((item) => item.riotId.toLowerCase() !== data.riot_id.toLowerCase());
+  const rows = profile.weekly.map((week, index) => ({
+    id: `${data.riot_id.toLowerCase()}|imported|${week.period}`,
+    riotId: data.riot_id,
+    timestamp: week.period,
+    source: "imported-match-review",
+    imported: true,
+    games: week.games,
+    role: data.summary.favorite_role,
+    metrics: {
+      win_rate: Number(week.win_rate),
+      avg_kda: Number(week.avg_kda),
+      avg_cs_min: Number(week.avg_cs_min),
+      avg_deaths: Number(week.avg_deaths || data.summary.avg_deaths),
+    },
+    focus: data.training_plan?.focus_areas?.map((item) => item.title) || [],
+    routineCompleted: 0,
+    coachNote: `${week.win_rate}% win rate across ${week.games} Riot matches. Review ${data.summary.favorite_role} decisions from this period.`,
+    order: index,
+  }));
+  localStorage.setItem(IMPORTED_HISTORY_KEY, JSON.stringify([...existing, ...rows].slice(-500)));
 };
 
 const saveGrowthSnapshot = (data, routine, routineState, force = false) => {
@@ -180,7 +216,7 @@ if (analysisApp) {
       <small>${escapeHtml(detail)}</small>
     </article>`;
 
-  const render = (data, forceSnapshot = false) => {
+    const render = (data, forceSnapshot = false) => {
     const summary = data.summary;
     document.querySelector("#player-name").textContent = data.riot_id;
     document.querySelector("#analysis-subtitle").textContent =
@@ -234,6 +270,7 @@ if (analysisApp) {
     } else {
       historyPanel.hidden = true;
     }
+    saveImportedHistory(data);
 
     document.querySelector("#benchmark-cohort").textContent =
       `${data.benchmark.cohort.toUpperCase()} / ${data.benchmark.sample_games} GAMES`;
@@ -504,7 +541,7 @@ if (analysisApp) {
 const growthApp = document.querySelector("#growth-app");
 
 if (growthApp) {
-  const history = loadGrowthHistory();
+  const history = [...loadGrowthHistory(), ...loadImportedHistory()];
   const playerSelect = document.querySelector("#growth-player");
   const profiles = [...new Map(history.map((item) => [item.riotId.toLowerCase(), item.riotId])).values()];
   let activePlayer = localStorage.getItem("rift-active-player") || profiles.at(-1) || "";
@@ -613,8 +650,8 @@ if (growthApp) {
       const analysisEvents = (activity?.analysis || []).map((item) => `
         <article class="calendar-event analysis-event">
           <span class="calendar-event-icon analysis">↗</span>
-          <div><strong>${item.games} match analysis checkpoint</strong><small>${escapeGrowthHtml(item.role || "Role not set")} · ${escapeGrowthHtml(item.source || "Riot API")}</small></div>
-          <div class="calendar-event-metrics"><span>KDA <b>${item.metrics.avg_kda}</b></span><span>CS/M <b>${item.metrics.avg_cs_min}</b></span><span>DEATHS <b>${item.metrics.avg_deaths}</b></span><span>WR <b>${item.metrics.win_rate}%</b></span></div>
+          <div><strong>${item.imported ? "Imported match review" : `${item.games} match analysis checkpoint`}</strong><small>${escapeGrowthHtml(item.role || "Role not set")} · ${escapeGrowthHtml(item.imported ? "Riot Match-V5 · not service usage" : item.source || "Riot API")}</small></div>
+          <div class="calendar-event-metrics"><span>KDA <b>${item.metrics.avg_kda}</b></span><span>CS/M <b>${item.metrics.avg_cs_min}</b></span><span>DEATHS <b>${item.metrics.avg_deaths}</b></span><span>WR <b>${item.metrics.win_rate}%</b></span>${item.coachNote ? `<small class="calendar-event-note">${escapeGrowthHtml(item.coachNote)}</small>` : ""}</div>
         </article>`);
       const badges = [];
       if (practiceEvents.length) badges.push(`<span class="practice">${practiceEvents.length} PRACTICE</span>`);
@@ -657,7 +694,7 @@ if (growthApp) {
     const formatDate = (value) => new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value));
     document.querySelector("#growth-last-sync").textContent = `LAST ANALYSIS · ${formatDate(latest.timestamp)}`;
     document.querySelector("#growth-completed").textContent = completed;
-    document.querySelector("#growth-checkpoints").textContent = snapshots.length;
+    document.querySelector("#growth-checkpoints").textContent = snapshots.filter((item) => !item.imported).length;
     document.querySelector("#growth-streak").textContent = actualStreak(activities);
     document.querySelector("#growth-analyze-link").href = `/analysis?riot_id=${encodeURIComponent(activePlayer)}&count=${latest.games}`;
 
@@ -701,7 +738,11 @@ if (growthApp) {
       let copy;
       let nextFocus;
 
-      if (isToday && routineDone >= routineTotal) {
+      if (selectedAnalysis?.imported) {
+        title = "Imported match review";
+        copy = selectedAnalysis.coachNote || "This period is based on Riot Match-V5 history, not a recorded GameLevel PT routine session.";
+        nextFocus = selectedAnalysis.focus?.[0] || latest.focus?.[0] || "Open the player analysis";
+      } else if (isToday && routineDone >= routineTotal) {
         title = "The training block is complete";
         copy = `All ${routineTotal} routine days are checked. Re-analyze the same ${latest.games}-match sample now to measure what changed.`;
         nextFocus = "Run the progress re-test";

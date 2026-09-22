@@ -17,7 +17,7 @@ from app.riot import RiotAPIError, RiotClient, read_cache, split_riot_id
 app = FastAPI(
     title="GameLevel PT",
     description="A high-rank benchmark and personal League of Legends training routine app.",
-    version="1.6.1",
+    version="1.6.2",
 )
 
 # Vercel serves files under public/ from its CDN. These mounts keep local

@@ -1669,6 +1669,7 @@ tr:last-child td { border-bottom: 0; }
 .growth-profile label { display: block; margin-bottom: 10px; color: var(--muted); font: 500 9px/1 var(--font-mono); letter-spacing: .12em; }
 .growth-profile select { width: 100%; height: 48px; padding: 0 12px; color: var(--paper); border: 1px solid var(--line-strong); background: var(--ink-2); }
 .growth-profile > span { display: block; margin-top: 13px; color: var(--cyan); font: 500 9px/1.4 var(--font-mono); }
+.growth-data-note { display: block; margin-top: 10px; color: var(--muted); font: 400 9px/1.4 var(--font-mono); }
 .growth-empty { min-height: 420px; padding: 72px; border: 1px solid var(--line); text-align: center; background: var(--panel); }
 .growth-empty > span { color: var(--cyan); font: 500 11px/1 var(--font-mono); }
 .growth-empty h2 { margin: 28px 0 12px; font-size: 42px; }
@@ -1729,6 +1730,7 @@ tr:last-child td { border-bottom: 0; }
 .calendar-event-metrics { display: flex; gap: 10px; }
 .calendar-event-metrics span { color: var(--muted); font: 500 7px/1 var(--font-mono); }
 .calendar-event-metrics b { display: block; margin-top: 5px; color: var(--paper); font-size: 10px; }
+.calendar-event-note { grid-column: 1 / -1; margin-top: 7px; color: var(--muted); font-size: 9px; line-height: 1.4; }
 .calendar-no-activity { margin: 0; padding: 8px 2px 2px; color: var(--muted); font-size: 10px; line-height: 1.55; }
 @keyframes calendar-detail-pulse { from { opacity: .55; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 .insight-panel { display: flex; flex-direction: column; background: linear-gradient(160deg, rgba(155,108,255,.2), rgba(17,22,39,.9)); }

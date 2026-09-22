@@ -208,6 +208,7 @@ def historical_profile(rows: list[dict[str, Any]]) -> dict[str, Any]:
                 "win_rate": round(float(group["win"].mean()) * 100, 1),
                 "avg_kda": round(float(group["kda"].mean()), 2),
                 "avg_cs_min": round(float(group["cs_per_min"].mean()), 1),
+                "avg_deaths": round(float(group["deaths"].mean()), 1),
             })
     return {
         "match_count": int(len(dated)),
