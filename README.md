@@ -311,12 +311,32 @@ Riot 개발 키는 24시간짜리 테스트용이며 공개 서비스 운영용�
 6. Vercel의 도메인 연결 완료 화면과 Riot 제품 등록 또는 운영 키 승인 자료를 별도로 보관합니다.
 7. 과거 운영일이나 이용자 수를 임의로 만들지 않고, 실제 테스트 일시와 결과만 제출합니다.
 
+## 13. Neon 운영 데이터베이스
+
+Vercel Marketplace의 Neon Postgres가 연결되어 있습니다. 분석 화면에서 저장 동의 체크박스를 선택한 세션만 실사용 기록으로 저장합니다. 공개 북미 전적 표본은 `public_cohort`에 별도로 저장되며 실사용자 수에 포함되지 않습니다.
+
+저장 항목:
+
+- 동의한 Riot ID, 계정 지역, 최초·최근 분석 시각
+- 실제 분석 요약과 벤치마크, 생성된 7일 루틴
+- Riot 경기 ID, 경기 날짜, 승패, 지표와 경기별 코치 코멘트
+- 실제로 체크한 루틴 일차와 완료 시각
+
+스키마를 새 DB에 적용할 때는 직접 연결 주소를 사용하는 다음 명령을 실행합니다.
+
+```cmd
+python -m scripts.migrate
+```
+
+운영 현황은 `https://gamelevelpt.com/operations`에서 확인합니다. `CONSENTED TESTERS`만 실제 서비스 이용자로 집계하며 `NA public match cohort`는 평가 데이터셋으로만 표시합니다.
+
 ## 주요 페이지
 
 - `/`: 영문 랜딩 페이지
 - `/analysis`: Riot ID 기반 비교 분석 및 7일 훈련 루틴
 - `/growth`: 루틴 달력, 성장 추이 및 분석 히스토리
 - `/privacy`: 데이터 사용 및 브라우저 저장 안내
+- `/operations`: DB 기반 실사용 분석·루틴 완료 현황과 북미 공개 평가 표본
 - `/metrics`: 이전 주소 호환을 위해 `/growth`로 자동 이동
 - `/docs`: FastAPI API 문서
 
@@ -329,10 +349,13 @@ vercel.json             Vercel 함수 번들 설정
 app/
   analytics.py          플레이어 및 벤치마크 계산
   config.py             경로와 환경변수 설정
+  db.py                 Neon 저장, 루틴 완료 및 운영 집계
   riot.py               Riot API 클라이언트와 CSV 캐시
 templates/              Jinja2 페이지 템플릿
 public/css/             반응형 스타일
 public/js/              검색 및 분석 화면 동작
 data/reference/         벤치마크 데이터
 data/users/             Riot ID별 로컬 캐시
+migrations/             Neon Postgres 스키마
+scripts/migrate.py      직접 연결을 사용하는 DB 마이그레이션
 ```

@@ -9,13 +9,15 @@ from pydantic import BaseModel, Field
 
 from app.analytics import analyze_matches
 from app.config import PUBLIC_DIR, TEMPLATES_DIR, riot_api_key
+from app.db import configured as database_configured
+from app.db import operations_summary, save_analysis, save_completion
 from app.riot import RiotAPIError, RiotClient, read_cache, split_riot_id
 
 
 app = FastAPI(
     title="GameLevel PT",
     description="A high-rank benchmark and personal League of Legends training routine app.",
-    version="1.4.0",
+    version="1.5.0",
 )
 
 # Vercel serves files under public/ from its CDN. These mounts keep local
@@ -38,7 +40,16 @@ class AnalyzeRequest(BaseModel):
     riot_id: str = Field(min_length=3, max_length=40)
     match_count: int = Field(default=10, ge=3, le=20)
     routing: Literal["americas", "europe", "asia", "sea"] = "asia"
+    consent_to_store: bool = False
     refresh: bool = False
+
+
+class RoutineCompletionRequest(BaseModel):
+    analysis_id: str
+    routine_token: str = Field(min_length=20, max_length=200)
+    day: int = Field(ge=1, le=7)
+    task: str = Field(min_length=1, max_length=200)
+    checked: bool
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -82,6 +93,19 @@ async def privacy_page(request: Request):
     )
 
 
+@app.get("/operations", response_class=HTMLResponse)
+async def operations_page(request: Request):
+    try:
+        summary = operations_summary()
+    except Exception:
+        summary = {"database": "unavailable", "analyses": 0, "testers": 0, "matches": 0, "completions": 0, "cohort": []}
+    return templates.TemplateResponse(
+        request=request,
+        name="operations.html",
+        context={"page": "operations", "operations": summary},
+    )
+
+
 @app.get("/metrics", include_in_schema=False)
 async def legacy_metrics_page():
     return RedirectResponse(url="/growth", status_code=307)
@@ -93,6 +117,7 @@ async def health():
         "status": "ok",
         "version": app.version,
         "riot_api_configured": bool(riot_api_key()),
+        "database_configured": database_configured(),
     }
 
 
@@ -136,4 +161,31 @@ async def analyze(payload: AnalyzeRequest):
     result["source"] = source
     result["routing"] = payload.routing
     result["analyzed_at"] = datetime.now(timezone.utc).isoformat()
+    result["persistence"] = {"status": "not requested"}
+    if payload.consent_to_store:
+        try:
+            saved = save_analysis(result, payload.routing, True)
+            if saved:
+                result["persistence"] = {"status": "saved", **saved}
+        except Exception:
+            result["persistence"] = {"status": "unavailable"}
     return result
+
+
+@app.post("/api/routine-completion")
+async def routine_completion(payload: RoutineCompletionRequest):
+    if not database_configured():
+        raise HTTPException(status_code=503, detail="Persistent storage is not configured.")
+    try:
+        save_completion(
+            payload.analysis_id,
+            payload.routine_token,
+            payload.day,
+            payload.task,
+            payload.checked,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="The completion could not be saved.") from exc
+    return {"status": "saved"}

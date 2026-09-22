@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Live Operations — GameLevel PT{% endblock %}
+
+{% block content %}
+<section class="operations-page">
+  <header class="operations-hero">
+    <div class="eyebrow"><span>LIVE</span> VERIFIED SERVICE ACTIVITY</div>
+    <h1>Operations<br><em>Signal.</em></h1>
+    <p>Only consented analysis sessions are counted as service use. Public North America accounts are maintained separately as an evaluation cohort.</p>
+  </header>
+
+  <section class="operations-grid">
+    <article><span>DATABASE</span><strong>{{ operations.database|upper }}</strong><small>Neon Postgres</small></article>
+    <article><span>CONSENTED TESTERS</span><strong>{{ operations.testers }}</strong><small>verified sessions</small></article>
+    <article><span>SAVED ANALYSES</span><strong>{{ operations.analyses }}</strong><small>Riot API results</small></article>
+    <article><span>VERIFIED MATCHES</span><strong>{{ operations.matches }}</strong><small>dated snapshots</small></article>
+    <article><span>ROUTINE CHECKS</span><strong>{{ operations.completions }}</strong><small>completed sessions</small></article>
+  </section>
+
+  <section class="panel cohort-panel">
+    <div class="panel-heading">
+      <div><span class="panel-kicker">EVALUATION DATASET</span><h2>NA public match cohort</h2></div>
+      <span class="mono">NOT SERVICE USERS</span>
+    </div>
+    <p class="benchmark-disclaimer">These accounts are candidates for public-match performance evaluation. They are never counted as users or routine completions.</p>
+    <div class="cohort-list">
+      {% for player in operations.cohort %}
+      <article><span>{{ "%02d"|format(loop.index) }}</span><strong>{{ player.riot_id }}</strong><small>{{ player.status|upper }}</small></article>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+{% endblock %}

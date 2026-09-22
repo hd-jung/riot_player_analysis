@@ -133,6 +133,7 @@ if (analysisApp) {
   const riotIdInput = document.querySelector("#analysis-riot-id");
   const matchCountInput = document.querySelector("#match-count");
   const regionInput = document.querySelector("#analysis-region");
+  const consentInput = document.querySelector("#consent-to-store");
 
   const escapeHtml = (value) =>
     String(value)
@@ -195,7 +196,8 @@ if (analysisApp) {
       timeZoneName: "short",
     }).format(new Date(data.analyzed_at));
     document.querySelector("#data-freshness").textContent =
-      `${data.source === "live" ? "Live Riot API" : "Cached Riot data"} · ${regionLabel} · ${analyzedAt}`;
+      `${data.source === "live" ? "Live Riot API" : "Cached Riot data"} · ${regionLabel} · ${analyzedAt}` +
+      (data.persistence?.status === "saved" ? " · Saved to verified history" : "");
     document.querySelector("#favorite-role").textContent =
       `PRIMARY / ${summary.favorite_role.toUpperCase()}`;
 
@@ -242,6 +244,10 @@ if (analysisApp) {
       }
     } catch (_) {
       routineState = { completed: {}, startedAt: new Date().toISOString() };
+    }
+    if (data.persistence?.status === "saved") {
+      routineState.analysisId = data.persistence.analysis_id;
+      routineState.routineToken = data.persistence.routine_token;
     }
     const saveRoutine = () => localStorage.setItem(routineKey, JSON.stringify(routineState));
     const completedDays = () => Object.keys(routineState.completed).map(Number).sort((a, b) => a - b);
@@ -317,6 +323,19 @@ if (analysisApp) {
         );
         saveRoutine();
         updateRoutineState();
+        if (routineState.analysisId && routineState.routineToken) {
+          fetch("/api/routine-completion", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              analysis_id: routineState.analysisId,
+              routine_token: routineState.routineToken,
+              day,
+              task: routine.schedule.find((item) => item.day === day)?.task || "Training session",
+              checked: input.checked,
+            }),
+          }).catch(() => {});
+        }
       });
     });
     document.querySelector("#complete-next-session").onclick = () => {
@@ -410,6 +429,7 @@ if (analysisApp) {
           riot_id: riotId,
           match_count: Number(matchCount),
           routing: regionInput.value,
+          consent_to_store: consentInput.checked,
           refresh,
         }),
       });

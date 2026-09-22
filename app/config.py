@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env.local")
 load_dotenv(BASE_DIR / ".env")
 
 DATA_DIR = BASE_DIR / "data"
@@ -16,3 +17,8 @@ PUBLIC_DIR = BASE_DIR / "public"
 
 def riot_api_key() -> str:
     return os.getenv("RIOT_API_KEY", "").strip()
+
+
+def database_url(direct: bool = False) -> str:
+    key = "DATABASE_URL_UNPOOLED" if direct else "DATABASE_URL"
+    return os.getenv(key, "").strip()

@@ -118,6 +118,7 @@ def analyze_matches(rows: list[dict[str, Any]], riot_id: str) -> dict[str, Any]:
         recent.append(
             {
                 "champion": row.champion,
+                "match_id": str(row.gameId),
                 "role": row.role,
                 "win": bool(row.win),
                 "score": f"{int(row.kills)} / {int(row.deaths)} / {int(row.assists)}",

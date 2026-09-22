@@ -23,12 +23,16 @@
           <option value="{{ option }}" {% if option == count %}selected{% endif %}>Last {{ option }} games</option>
         {% endfor %}
       </select>
+      <label class="consent-check" for="consent-to-store">
+        <input id="consent-to-store" type="checkbox">
+        <span>I am analyzing my own Riot ID or have permission, and agree to save this analysis and routine progress.</span>
+      </label>
       <button type="submit">ANALYZE MATCHES <span>→</span></button>
     </form>
     <div class="sidebar-note">
       <span>DATA SOURCE</span>
       <strong id="data-source">Checking…</strong>
-      <small id="data-freshness">Submit a Riot ID to request recent match data.</small>
+      <small id="data-freshness">Submit a Riot ID to request recent match data. Check consent to save verified history.</small>
     </div>
   </aside>
 

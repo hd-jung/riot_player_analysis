@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css?v=1.4.0">
+  <link rel="stylesheet" href="/css/styles.css?v=1.5.0">
   {% block head %}{% endblock %}
 </head>
 <body class="page-{{ page }}">
@@ -29,6 +29,7 @@
       <a href="/" class="{% if page == 'home' %}active{% endif %}">Home</a>
       <a href="/analysis" class="{% if page == 'analysis' %}active{% endif %}">My Training</a>
       <a href="/growth" class="{% if page == 'growth' %}active{% endif %}">Growth History</a>
+      <a href="/operations" class="{% if page == 'operations' %}active{% endif %}">Live Operations</a>
     </nav>
     <a class="header-cta" id="header-analysis-cta" href="/analysis">Analyze player <span>↗</span></a>
   </header>
@@ -44,11 +45,11 @@
     <div class="footer-meta">
       <span>Built for global players</span>
       <a href="/privacy">Privacy</a>
-      <span>v1.4.0 / FastAPI</span>
+      <span>v1.5.0 / FastAPI + Neon</span>
     </div>
   </footer>
 
-  <script src="/js/app.js?v=1.4.0" defer></script>
+  <script src="/js/app.js?v=1.5.0" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
