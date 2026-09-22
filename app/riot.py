@@ -93,11 +93,11 @@ class RiotClient:
         self.timeout = httpx.Timeout(15.0, connect=10.0)
 
     async def _get_json(self, client: httpx.AsyncClient, url: str) -> Any:
-        for attempt in range(3):
+        for attempt in range(6):
             try:
                 response = await client.get(url, headers=self.headers)
             except httpx.RequestError as exc:
-                if attempt == 2:
+                if attempt == 5:
                     raise RiotAPIError(f"Could not reach Riot Games: {exc}") from exc
                 await asyncio.sleep(0.6 * (attempt + 1))
                 continue
@@ -106,13 +106,13 @@ class RiotClient:
                 return response.json()
             if response.status_code == 429:
                 wait = float(response.headers.get("Retry-After", "1") or "1")
-                await asyncio.sleep(min(wait, 5.0))
+                await asyncio.sleep(min(wait, 20.0))
                 continue
             if response.status_code in {401, 403}:
                 raise RiotAPIError("The Riot API key is invalid or expired.")
             if response.status_code == 404:
                 raise RiotAPIError("Riot ID or match data was not found.")
-            if response.status_code >= 500 and attempt < 2:
+            if response.status_code >= 500 and attempt < 5:
                 await asyncio.sleep(0.8 * (attempt + 1))
                 continue
             raise RiotAPIError(

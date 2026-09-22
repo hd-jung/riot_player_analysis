@@ -150,7 +150,7 @@ async def analyze(payload: AnalyzeRequest):
             )
         try:
             history_start = int((datetime.now(timezone.utc) - timedelta(days=90)).timestamp()) if cohort else None
-            request_count = 100 if cohort else payload.match_count
+            request_count = 75 if cohort else payload.match_count
             rows = await RiotClient(key, payload.routing).collect(
                 payload.riot_id, request_count, start_time=history_start
             )

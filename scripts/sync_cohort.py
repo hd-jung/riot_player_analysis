@@ -31,7 +31,7 @@ async def main() -> None:
             print(f"SKIP {riot_id}: not in public cohort")
             continue
         try:
-            rows = await client.collect(riot_id, 100, start_time=start_time)
+            rows = await client.collect(riot_id, 75, start_time=start_time)
             saved = save_cohort_matches(cohort["id"], rows)
             print(f"OK {riot_id}: {saved} new matches, {len(rows)} found")
         except RiotAPIError as exc:
