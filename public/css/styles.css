@@ -1406,6 +1406,15 @@ tr:last-child td { border-bottom: 0; }
 .match-item strong { font-size: 13px; }
 .match-item span { color: var(--muted); font: 400 10px/1 var(--font-mono); }
 .match-score { color: var(--paper) !important; }
+.match-copy { min-width: 0; padding: 11px 0; }
+.match-copy strong, .match-copy small { display: block; }
+.match-copy small {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
 
 /* Metrics */
 .metrics-hero {

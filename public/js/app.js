@@ -380,14 +380,22 @@ if (analysisApp) {
 
     document.querySelector("#recent-matches").innerHTML = data.recent_matches
       .map(
-        (match) => `
+        (match) => {
+          const playedAt = match.played_at
+            ? new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(match.played_at))
+            : "Date unavailable in cached record";
+          return `
         <article class="match-item ${match.win ? "win" : "loss"}">
           <i class="match-result"></i>
-          <strong>${escapeHtml(match.champion)}</strong>
+          <div class="match-copy">
+            <strong>${escapeHtml(match.champion)}</strong>
+            <small>${escapeHtml(playedAt)} · ${escapeHtml(match.coach_note)}</small>
+          </div>
           <span>${escapeHtml(match.role.toUpperCase())}</span>
           <span class="match-score">${escapeHtml(match.score)}</span>
           <span>${match.duration} MIN</span>
-        </article>`
+        </article>`;
+        }
       )
       .join("");
   };

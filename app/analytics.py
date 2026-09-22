@@ -38,7 +38,30 @@ def _records_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
         .fillna("Flex")
     )
     frame["cs_per_min"] = frame["cs"] / (frame["timePlayed"].clip(lower=1) / 60)
+    if "playedAt" in frame.columns:
+        frame["played_at"] = pd.to_datetime(
+            pd.to_numeric(frame["playedAt"], errors="coerce"),
+            unit="ms",
+            utc=True,
+            errors="coerce",
+        )
+    else:
+        frame["played_at"] = pd.NaT
     return frame
+
+
+def _match_coach_note(row: Any) -> str:
+    if bool(row.win) and float(row.kda) >= 3:
+        return "Strong conversion: efficient fighting supported the win."
+    if int(row.deaths) >= 7:
+        return "Review the first two deaths and identify the safer exit route."
+    if float(row.cs_per_min) < 6:
+        return "Farm pace fell behind; protect the next two lane-wave timings."
+    if not bool(row.win) and float(row.kda) >= 3:
+        return "Solid individual output; review how the lead could convert into objectives."
+    if bool(row.win):
+        return "Win secured; keep the same objective setup and reduce avoidable risks."
+    return "Close the feedback loop by reviewing one low-value fight from this match."
 
 
 def analyze_matches(rows: list[dict[str, Any]], riot_id: str) -> dict[str, Any]:
@@ -101,6 +124,12 @@ def analyze_matches(rows: list[dict[str, Any]], riot_id: str) -> dict[str, Any]:
                 "kda": round(float(row.kda), 2),
                 "cs": int(row.cs),
                 "duration": round(float(row.timePlayed) / 60),
+                "played_at": (
+                    row.played_at.isoformat()
+                    if not pd.isna(row.played_at)
+                    else None
+                ),
+                "coach_note": _match_coach_note(row),
             }
         )
 

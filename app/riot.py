@@ -23,6 +23,7 @@ COLUMNS = [
     "kda",
     "cs",
     "timePlayed",
+    "playedAt",
 ]
 
 
@@ -189,4 +190,9 @@ class RiotClient:
             "cs": int(participant.get("totalMinionsKilled", 0) or 0)
             + int(participant.get("neutralMinionsKilled", 0) or 0),
             "timePlayed": int(participant.get("timePlayed", 0) or 0),
+            "playedAt": int(
+                info.get("gameEndTimestamp")
+                or info.get("gameCreation")
+                or 0
+            ),
         }
