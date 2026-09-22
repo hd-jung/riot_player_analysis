@@ -340,6 +340,20 @@ python -m scripts.migrate
 - `/metrics`: 이전 주소 호환을 위해 `/growth`로 자동 이동
 - `/docs`: FastAPI API 문서
 
+### 북미 공개 전적 90일 프로필 갱신
+
+공개 Riot ID의 실제 Match-V5 기록은 실사용자·서비스 이용 이력과 분리된 내부 검증 데이터입니다. 계정 목록은 공개 운영 화면에 노출하지 않으며, 해당 Riot ID를 직접 검색했을 때만 `90-DAY RIOT MATCH HISTORY`가 표시됩니다. 과거 전적 날짜는 Riot 경기 날짜이고 GameLevel PT 이용 날짜가 아닙니다.
+
+VS Code 터미널에서 운영 환경값을 내려받은 뒤 필요한 계정만 갱신합니다.
+
+```bat
+vercel env pull .env.production.local --environment=production --yes
+python -m scripts.migrate
+python -m scripts.sync_cohort --riot-id "GameName#Tag" --days 90
+```
+
+여러 계정은 `--riot-id`를 반복해서 지정합니다. Riot 개발 키가 만료되면 Vercel의 `RIOT_API_KEY`를 먼저 갱신해야 하며, 수집에 성공한 계정만 검증 완료로 기록됩니다. `.env.production.local`은 Git에 포함하지 않습니다.
+
 ## 프로젝트 구조
 
 ```text

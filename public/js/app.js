@@ -195,8 +195,13 @@ if (analysisApp) {
       minute: "2-digit",
       timeZoneName: "short",
     }).format(new Date(data.analyzed_at));
+    const sourceLabel = data.source === "live"
+      ? "Live Riot API"
+      : data.source === "riot-history-import"
+        ? "Imported Riot match history"
+        : "Cached Riot data";
     document.querySelector("#data-freshness").textContent =
-      `${data.source === "live" ? "Live Riot API" : "Cached Riot data"} · ${regionLabel} · ${analyzedAt}` +
+      `${sourceLabel} · ${regionLabel} · Analyzed ${analyzedAt}` +
       (data.persistence?.status === "saved" ? " · Saved to verified history" : "");
     document.querySelector("#favorite-role").textContent =
       `PRIMARY / ${summary.favorite_role.toUpperCase()}`;
@@ -207,6 +212,28 @@ if (analysisApp) {
       metricCard("CS PER MIN", summary.avg_cs_min, `${summary.avg_cs} average CS`),
       metricCard("COMFORT ROLE", summary.favorite_role, `${summary.champion_pool} picks in pool`),
     ].join("");
+
+    const historyPanel = document.querySelector("#history-panel");
+    if (data.historical_profile?.match_count) {
+      const history = data.historical_profile;
+      const shortDate = (value) => new Intl.DateTimeFormat("en", {
+        month: "short", day: "numeric", year: "numeric",
+      }).format(new Date(value));
+      historyPanel.hidden = false;
+      document.querySelector("#history-range").textContent = `${shortDate(history.from)} — ${shortDate(history.to)}`;
+      document.querySelector("#history-disclaimer").textContent =
+        `${history.label}. ${history.match_count} public ranked matches are used as a historical performance profile; this is not past GameLevel PT usage. First analyzed ${analyzedAt}.`;
+      document.querySelector("#history-summary").innerHTML = `
+        <article><span>MATCHES IMPORTED</span><strong>${history.match_count}</strong></article>
+        <article><span>WEEKS OBSERVED</span><strong>${history.weekly.length}</strong></article>`;
+      document.querySelector("#history-weeks").innerHTML = history.weekly.slice(-13).map((week) => `
+        <article>
+          <time>${shortDate(week.period)}</time><span>${week.games} G</span>
+          <strong>${week.win_rate}% WR</strong><span>${week.avg_kda} KDA</span><span>${week.avg_cs_min} CS/M</span>
+        </article>`).join("");
+    } else {
+      historyPanel.hidden = true;
+    }
 
     document.querySelector("#benchmark-cohort").textContent =
       `${data.benchmark.cohort.toUpperCase()} / ${data.benchmark.sample_games} GAMES`;

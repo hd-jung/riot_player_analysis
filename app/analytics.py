@@ -194,6 +194,30 @@ def analyze_matches(rows: list[dict[str, Any]], riot_id: str) -> dict[str, Any]:
     }
 
 
+def historical_profile(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    frame = _records_frame(rows)
+    dated = frame.dropna(subset=["played_at"]).sort_values("played_at")
+    weekly = []
+    if not dated.empty:
+        for period, group in dated.groupby(pd.Grouper(key="played_at", freq="7D")):
+            if group.empty:
+                continue
+            weekly.append({
+                "period": period.isoformat(),
+                "games": int(len(group)),
+                "win_rate": round(float(group["win"].mean()) * 100, 1),
+                "avg_kda": round(float(group["kda"].mean()), 2),
+                "avg_cs_min": round(float(group["cs_per_min"].mean()), 1),
+            })
+    return {
+        "match_count": int(len(dated)),
+        "from": dated["played_at"].min().isoformat() if not dated.empty else None,
+        "to": dated["played_at"].max().isoformat() if not dated.empty else None,
+        "weekly": weekly,
+        "label": "Imported from Riot Match History",
+    }
+
+
 def _player_benchmark(frame: pd.DataFrame, favorite_role: str) -> dict[str, Any]:
     """Compare the player with KR high-rank matches in the same primary role."""
     from .config import REFERENCE_DATA_DIR

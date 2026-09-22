@@ -121,7 +121,7 @@ class RiotClient:
 
         raise RiotAPIError("Riot Games did not respond after several attempts.")
 
-    async def collect(self, riot_id: str, count: int) -> list[dict[str, Any]]:
+    async def collect(self, riot_id: str, count: int, start_time: int | None = None) -> list[dict[str, Any]]:
         game_name, tag_line = split_riot_id(riot_id)
         encoded_game = quote(game_name, safe="")
         encoded_tag = quote(tag_line, safe="")
@@ -136,10 +136,12 @@ class RiotClient:
             if not puuid:
                 raise RiotAPIError("The Riot account response did not include a PUUID.")
 
+            query = f"?start=0&count={min(count, 100)}&type=ranked"
+            if start_time:
+                query += f"&startTime={start_time}"
             match_ids = await self._get_json(
                 client,
-                f"{base}/lol/match/v5/matches/by-puuid/{puuid}/ids"
-                f"?start=0&count={count}&type=ranked",
+                f"{base}/lol/match/v5/matches/by-puuid/{puuid}/ids{query}",
             )
 
             rows: list[dict[str, Any]] = []

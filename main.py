@@ -7,17 +7,17 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
-from app.analytics import analyze_matches
+from app.analytics import analyze_matches, historical_profile
 from app.config import PUBLIC_DIR, TEMPLATES_DIR, riot_api_key
 from app.db import configured as database_configured
-from app.db import operations_summary, save_analysis, save_completion
+from app.db import cohort_identity, load_cohort_matches, operations_summary, save_analysis, save_completion
 from app.riot import RiotAPIError, RiotClient, read_cache, split_riot_id
 
 
 app = FastAPI(
     title="GameLevel PT",
     description="A high-rank benchmark and personal League of Legends training routine app.",
-    version="1.5.0",
+    version="1.6.0",
 )
 
 # Vercel serves files under public/ from its CDN. These mounts keep local
@@ -98,7 +98,7 @@ async def operations_page(request: Request):
     try:
         summary = operations_summary()
     except Exception:
-        summary = {"database": "unavailable", "analyses": 0, "testers": 0, "matches": 0, "completions": 0, "cohort": []}
+        summary = {"database": "unavailable", "analyses": 0, "testers": 0, "matches": 0, "completions": 0, "cohort_count": 0, "cohort_verified": 0}
     return templates.TemplateResponse(
         request=request,
         name="operations.html",
@@ -130,8 +130,13 @@ async def analyze(payload: AnalyzeRequest):
 
     rows = []
     source = "cache"
+    cohort = cohort_identity(payload.riot_id, payload.routing)
+    cohort_rows = load_cohort_matches(cohort["id"]) if cohort and cohort.get("status") == "verified" else []
+    if cohort_rows:
+        rows = cohort_rows
+        source = "riot-history-import"
     if not payload.refresh:
-        rows = read_cache(game_name, tag_line)
+        rows = rows or read_cache(game_name, tag_line)
 
     if not rows:
         key = riot_api_key()
@@ -161,6 +166,8 @@ async def analyze(payload: AnalyzeRequest):
     result["source"] = source
     result["routing"] = payload.routing
     result["analyzed_at"] = datetime.now(timezone.utc).isoformat()
+    if cohort_rows:
+        result["historical_profile"] = historical_profile(cohort_rows)
     result["persistence"] = {"status": "not requested"}
     if payload.consent_to_store:
         try:

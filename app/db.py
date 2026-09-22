@@ -90,7 +90,7 @@ def save_completion(analysis_id: str, token: str, day: int, task: str, checked: 
 
 def operations_summary() -> dict[str, Any]:
     if not configured():
-        return {"database": "not configured", "analyses": 0, "testers": 0, "matches": 0, "completions": 0, "cohort": []}
+        return {"database": "not configured", "analyses": 0, "testers": 0, "matches": 0, "completions": 0, "cohort_count": 0, "cohort_verified": 0}
     with psycopg.connect(database_url(), row_factory=dict_row) as connection:
         counts = connection.execute(
             """SELECT
@@ -98,9 +98,52 @@ def operations_summary() -> dict[str, Any]:
                 (SELECT COUNT(*) FROM player_profiles WHERE consent_confirmed_at IS NOT NULL) AS testers,
                 (SELECT COUNT(*) FROM match_snapshots) AS matches,
                 (SELECT COUNT(*) FROM routine_completions) AS completions,
+                (SELECT COUNT(*) FROM public_cohort) AS cohort_count,
+                (SELECT COUNT(*) FROM public_cohort WHERE status = 'verified') AS cohort_verified,
                 (SELECT MAX(analyzed_at) FROM analyses) AS last_analysis"""
         ).fetchone()
-        cohort = connection.execute(
-            "SELECT riot_id, status, last_verified_at FROM public_cohort ORDER BY id LIMIT 10"
+    return {"database": "connected", **dict(counts)}
+
+
+def cohort_identity(riot_id: str, routing: str) -> dict[str, Any] | None:
+    if not configured():
+        return None
+    with psycopg.connect(database_url(), row_factory=dict_row) as connection:
+        row = connection.execute(
+            "SELECT id, riot_id, status, imported_at FROM public_cohort WHERE LOWER(riot_id) = LOWER(%s) AND routing = %s",
+            (riot_id, routing),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def save_cohort_matches(cohort_id: int, rows: list[dict[str, Any]]) -> int:
+    saved = 0
+    with psycopg.connect(database_url()) as connection:
+        for row in rows:
+            played_at = datetime.fromtimestamp(int(row.get("playedAt", 0)) / 1000, tz=timezone.utc)
+            cursor = connection.execute(
+                """INSERT INTO cohort_matches
+                (cohort_id, match_id, played_at, champion, role, won, kills, deaths, assists, kda, cs, duration_seconds)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (cohort_id, match_id) DO NOTHING""",
+                (cohort_id, str(row["gameId"]), played_at, row["champion"], row["teamPosition"], row["win"],
+                 row["kills"], row["deaths"], row["assists"], row["kda"], row["cs"], row["timePlayed"]),
+            )
+            saved += cursor.rowcount
+        connection.execute(
+            "UPDATE public_cohort SET status='verified', last_verified_at=NOW(), imported_at=NOW() WHERE id=%s",
+            (cohort_id,),
+        )
+    return saved
+
+
+def load_cohort_matches(cohort_id: int) -> list[dict[str, Any]]:
+    with psycopg.connect(database_url(), row_factory=dict_row) as connection:
+        rows = connection.execute(
+            """SELECT match_id AS "gameId", champion, kills, deaths, assists,
+            role AS "teamPosition", won AS win, kda, cs, duration_seconds AS "timePlayed",
+            (EXTRACT(EPOCH FROM played_at) * 1000)::bigint AS "playedAt"
+            FROM cohort_matches WHERE cohort_id=%s ORDER BY played_at DESC""",
+            (cohort_id,),
         ).fetchall()
-    return {"database": "connected", **dict(counts), "cohort": [dict(row) for row in cohort]}
+    return [dict(row) for row in rows]
