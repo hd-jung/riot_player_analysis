@@ -18,12 +18,28 @@ if (heroSearch) {
       document.querySelector("#hero-riot-id").reportValidity();
       return;
     }
-    window.location.href = `/analysis?riot_id=${encodeURIComponent(riotId)}&count=10`;
+    const region = document.querySelector("#hero-region").value;
+    window.location.href = `/analysis?riot_id=${encodeURIComponent(riotId)}&count=10&region=${encodeURIComponent(region)}`;
   });
 }
 
 const GROWTH_HISTORY_KEY = "rift-growth-history:v1";
 const PRACTICE_HISTORY_KEY = "rift-practice-history:v1";
+
+// Remove legacy generated snapshots from browsers that visited an older build.
+try {
+  const growth = JSON.parse(localStorage.getItem(GROWTH_HISTORY_KEY) || "[]");
+  if (Array.isArray(growth)) {
+    const liveGrowth = growth.filter((item) => item.source !== "demo");
+    localStorage.setItem(GROWTH_HISTORY_KEY, JSON.stringify(liveGrowth));
+    const active = localStorage.getItem("rift-active-player")?.toLowerCase();
+    if (active && !liveGrowth.some((item) => item.riotId?.toLowerCase() === active)) {
+      localStorage.removeItem("rift-active-player");
+    }
+  }
+} catch (_) {
+  // Ignore malformed legacy browser state and continue with a clean live flow.
+}
 
 const configureHeaderAnalysisCta = (riotId = "", matchCount = null) => {
   const cta = document.querySelector("#header-analysis-cta");
@@ -71,91 +87,6 @@ const recordPracticeCompletion = (riotId, routineState, day, task, checked) => {
   localStorage.setItem(PRACTICE_HISTORY_KEY, JSON.stringify(log.slice(-500)));
 };
 
-const seedDemoProfile = (data, routine) => {
-  const demoKey = data.riot_id.toLowerCase();
-  const history = loadGrowthHistory();
-  if (history.some((item) => item.riotId.toLowerCase() === demoKey)) return null;
-
-  const now = new Date();
-  const stampDaysAgo = (days, hour = 20) => {
-    const date = new Date(now);
-    date.setDate(date.getDate() - days);
-    date.setHours(hour, 0, 0, 0);
-    return date.toISOString();
-  };
-  const metricPath = [
-    { days: 28, win_rate: 45, avg_kda: 3.15, avg_cs_min: 6.4, avg_deaths: 5.9, gap: 25, completed: 0 },
-    { days: 21, win_rate: 48, avg_kda: 3.45, avg_cs_min: 6.7, avg_deaths: 5.5, gap: 21, completed: 5 },
-    { days: 14, win_rate: 52, avg_kda: 3.8, avg_cs_min: 7.0, avg_deaths: 5.1, gap: 17, completed: 11 },
-    { days: 7, win_rate: 56, avg_kda: 4.2, avg_cs_min: 7.3, avg_deaths: 4.7, gap: 12, completed: 17 },
-    {
-      days: 0,
-      win_rate: Number(data.summary.win_rate),
-      avg_kda: Number(data.summary.avg_kda),
-      avg_cs_min: Number(data.summary.avg_cs_min),
-      avg_deaths: Number(data.summary.avg_deaths),
-      gap: Number((data.benchmark.comparisons.reduce((sum, item) => sum + item.gap_score, 0) / data.benchmark.comparisons.length).toFixed(1)),
-      completed: 23,
-    },
-  ];
-  const demoSnapshots = metricPath.map((point, index) => ({
-    id: `demo-checkpoint-${index + 1}`,
-    riotId: data.riot_id,
-    timestamp: stampDaysAgo(point.days, 21),
-    source: "demo",
-    games: 10,
-    role: data.summary.favorite_role,
-    metrics: {
-      win_rate: point.win_rate,
-      avg_kda: point.avg_kda,
-      avg_cs_min: point.avg_cs_min,
-      avg_deaths: point.avg_deaths,
-    },
-    gapScore: point.gap,
-    focus: routine.focus_areas.map((item) => item.title),
-    routineCompleted: point.completed,
-  }));
-  localStorage.setItem(GROWTH_HISTORY_KEY, JSON.stringify([...history, ...demoSnapshots].slice(-120)));
-  localStorage.setItem("rift-active-player", data.riot_id);
-
-  const blockStart = stampDaysAgo(3, 9);
-  const currentCompleted = {};
-  [3, 2, 1, 0].forEach((daysAgo, index) => {
-    currentCompleted[index + 1] = stampDaysAgo(daysAgo);
-  });
-  const routineState = { completed: currentCompleted, startedAt: blockStart };
-
-  const otherPractice = loadPracticeHistory().filter((item) => item.riotId.toLowerCase() !== demoKey);
-  const demoPractice = [];
-  let sequence = 1;
-  for (let daysAgo = 28; daysAgo >= 5; daysAgo -= 1) {
-    if (daysAgo % 6 === 0) continue;
-    const scheduleDay = ((sequence - 1) % 7) + 1;
-    demoPractice.push({
-      id: `${demoKey}|demo-block-${Math.floor((sequence - 1) / 7) + 1}|${scheduleDay}`,
-      riotId: data.riot_id,
-      block: `demo-block-${Math.floor((sequence - 1) / 7) + 1}`,
-      day: scheduleDay,
-      task: routine.schedule[scheduleDay - 1].task,
-      timestamp: stampDaysAgo(daysAgo),
-    });
-    sequence += 1;
-  }
-  Object.entries(currentCompleted).forEach(([day, timestamp]) => {
-    demoPractice.push({
-      id: `${demoKey}|${blockStart}|${day}`,
-      riotId: data.riot_id,
-      block: blockStart,
-      day: Number(day),
-      task: routine.schedule[Number(day) - 1].task,
-      timestamp,
-    });
-  });
-  localStorage.setItem(PRACTICE_HISTORY_KEY, JSON.stringify([...otherPractice, ...demoPractice].slice(-500)));
-  return routineState;
-};
-
-
 const loadGrowthHistory = () => {
   try {
     const saved = JSON.parse(localStorage.getItem(GROWTH_HISTORY_KEY) || "[]");
@@ -201,6 +132,7 @@ if (analysisApp) {
   const form = document.querySelector("#analysis-search");
   const riotIdInput = document.querySelector("#analysis-riot-id");
   const matchCountInput = document.querySelector("#match-count");
+  const regionInput = document.querySelector("#analysis-region");
 
   const escapeHtml = (value) =>
     String(value)
@@ -221,6 +153,7 @@ if (analysisApp) {
 
   const setLoading = (loading) => {
     document.querySelector("#loading-state").hidden = !loading;
+    document.querySelector("#idle-state").hidden = true;
     document.querySelector("#analysis-results").hidden = loading;
     document.querySelector("#error-state").hidden = true;
     const status = document.querySelector("#analysis-status");
@@ -230,6 +163,7 @@ if (analysisApp) {
 
   const showError = (message) => {
     document.querySelector("#loading-state").hidden = true;
+    document.querySelector("#idle-state").hidden = true;
     document.querySelector("#analysis-results").hidden = true;
     document.querySelector("#error-state").hidden = false;
     document.querySelector("#error-message").textContent = message;
@@ -251,6 +185,17 @@ if (analysisApp) {
     document.querySelector("#analysis-subtitle").textContent =
       `${summary.games} ranked matches · ${summary.champion_pool} champions tracked`;
     document.querySelector("#data-source").textContent = data.source.toUpperCase();
+    const regionLabel = regionInput.options[regionInput.selectedIndex]?.text || data.routing;
+    const analyzedAt = new Intl.DateTimeFormat("en", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+    }).format(new Date(data.analyzed_at));
+    document.querySelector("#data-freshness").textContent =
+      `${data.source === "live" ? "Live Riot API" : "Cached Riot data"} · ${regionLabel} · ${analyzedAt}`;
     document.querySelector("#favorite-role").textContent =
       `PRIMARY / ${summary.favorite_role.toUpperCase()}`;
 
@@ -297,10 +242,6 @@ if (analysisApp) {
       }
     } catch (_) {
       routineState = { completed: {}, startedAt: new Date().toISOString() };
-    }
-    if (data.demo) {
-      const seededState = seedDemoProfile(data, routine);
-      if (seededState) routineState = seededState;
     }
     const saveRoutine = () => localStorage.setItem(routineKey, JSON.stringify(routineState));
     const completedDays = () => Object.keys(routineState.completed).map(Number).sort((a, b) => a - b);
@@ -389,7 +330,7 @@ if (analysisApp) {
     };
     saveRoutine();
     updateRoutineState();
-    if (!data.demo) saveGrowthSnapshot(data, routine, routineState, forceSnapshot);
+    saveGrowthSnapshot(data, routine, routineState, forceSnapshot);
     configureHeaderAnalysisCta(data.riot_id, summary.games);
 
     document.querySelector("#role-bars").innerHTML = data.roles
@@ -460,6 +401,7 @@ if (analysisApp) {
         body: JSON.stringify({
           riot_id: riotId,
           match_count: Number(matchCount),
+          routing: regionInput.value,
           refresh,
         }),
       });
@@ -484,12 +426,24 @@ if (analysisApp) {
     }
     riotIdInput.setCustomValidity("");
     const count = matchCountInput.value;
-    window.history.replaceState({}, "", `/analysis?riot_id=${encodeURIComponent(riotId)}&count=${count}`);
+    const region = regionInput.value;
+    window.history.replaceState({}, "", `/analysis?riot_id=${encodeURIComponent(riotId)}&count=${count}&region=${encodeURIComponent(region)}`);
     loadAnalysis(riotId, count, true);
   });
 
   const refreshOnLoad = new URLSearchParams(window.location.search).get("refresh") === "1";
-  loadAnalysis(analysisApp.dataset.riotId, analysisApp.dataset.count, refreshOnLoad, refreshOnLoad);
+  if (analysisApp.dataset.riotId.trim()) {
+    loadAnalysis(analysisApp.dataset.riotId, analysisApp.dataset.count, refreshOnLoad, refreshOnLoad);
+  } else {
+    document.querySelector("#loading-state").hidden = true;
+    document.querySelector("#idle-state").hidden = false;
+    document.querySelector("#player-name").textContent = "Ready when you are";
+    document.querySelector("#analysis-subtitle").textContent = "Enter a Riot ID and select the account region to begin.";
+    document.querySelector("#data-source").textContent = "WAITING FOR PLAYER";
+    const status = document.querySelector("#analysis-status");
+    status.classList.add("ready");
+    status.querySelector("span").textContent = "READY FOR INPUT";
+  }
 }
 
 const growthApp = document.querySelector("#growth-app");

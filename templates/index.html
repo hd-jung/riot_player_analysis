@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Rift Signal — Your personal LoL training coach{% endblock %}
+{% block title %}GameLevel PT — Your personal LoL training coach{% endblock %}
 
 {% block content %}
 <section class="hero">
@@ -15,10 +15,19 @@
       <label for="hero-riot-id">Enter a Riot ID</label>
       <div class="search-control">
         <span class="search-prefix" aria-hidden="true">#</span>
-        <input id="hero-riot-id" name="riot_id" value="dummy_player#KR1" autocomplete="off" required>
+        <input id="hero-riot-id" name="riot_id" placeholder="GameName#Tag" autocomplete="off" required>
         <button type="submit">BUILD MY ROUTINE <span>→</span></button>
       </div>
-      <p class="input-hint">Use the format GameName#Tag · KR, JP, and SEA routing ready</p>
+      <div class="region-field">
+        <label for="hero-region">Account region</label>
+        <select id="hero-region" name="region">
+          <option value="asia">Asia — KR / JP</option>
+          <option value="sea">Southeast Asia</option>
+          <option value="americas">Americas — NA / BR / LAN / LAS</option>
+          <option value="europe">Europe — EUW / EUNE / TR / RU</option>
+        </select>
+      </div>
+      <p class="input-hint">Use GameName#Tag. Your Riot ID is used only to request recent match data.</p>
     </form>
   </div>
 
@@ -28,21 +37,21 @@
     </div>
     <div class="hero-card">
       <div class="hero-card-top">
-        <span class="live-dot">LIVE SIGNAL</span>
-        <span class="mono">KR / SOLO Q</span>
+        <span class="live-dot">PRODUCT PREVIEW</span>
+        <span class="mono">GLOBAL / SOLO Q</span>
       </div>
       <div class="player-lockup">
         <div class="player-monogram">HB</div>
         <div>
           <span class="label">PLAYER PROFILE</span>
-          <strong>dummy_player</strong>
-          <small>Last 10 ranked matches</small>
+          <strong>YOUR PROFILE</strong>
+          <small>Recent ranked matches</small>
         </div>
       </div>
       <div class="signal-score">
         <div>
           <span class="label">FORM INDEX</span>
-          <strong>84</strong><small>/100</small>
+          <strong>—</strong><small>/100</small>
         </div>
         <div class="signal-bars" aria-hidden="true">
           <i style="--h: 38%"></i><i style="--h: 52%"></i><i style="--h: 46%"></i>
@@ -51,14 +60,14 @@
         </div>
       </div>
       <div class="hero-stats">
-        <div><span>WIN RATE</span><strong>60%</strong></div>
-        <div><span>AVG KDA</span><strong>4.28</strong></div>
-        <div><span>MAIN ROLE</span><strong>MID</strong></div>
+        <div><span>WIN RATE</span><strong>—</strong></div>
+        <div><span>AVG KDA</span><strong>—</strong></div>
+        <div><span>MAIN ROLE</span><strong>—</strong></div>
       </div>
       <div class="hero-pick">
         <span class="pick-rank">01</span>
-        <div><span class="label">NEXT PICK SIGNAL</span><strong>ORIANA</strong></div>
-        <span class="confidence">HIGH</span>
+        <div><span class="label">NEXT PICK SIGNAL</span><strong>AFTER ANALYSIS</strong></div>
+        <span class="confidence">PERSONAL</span>
       </div>
     </div>
     <span class="visual-note note-a">ROLE MOMENTUM</span>

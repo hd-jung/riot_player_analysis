@@ -126,7 +126,7 @@ button {
 }
 
 .brand-mark {
-  width: 43px;
+  width: 56px;
   height: 43px;
   display: grid;
   place-items: center;
@@ -328,6 +328,30 @@ button {
   margin: 11px 0 0;
   color: #687185;
   font: 400 10px/1.5 var(--font-mono);
+}
+
+.region-field {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: auto minmax(190px, 280px);
+  align-items: center;
+  gap: 14px;
+}
+
+.region-field label {
+  color: var(--muted);
+  font: 500 10px/1 var(--font-mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.region-field select {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  color: var(--paper);
+  border: 1px solid var(--line-strong);
+  background: var(--ink-2);
 }
 
 .hero-visual {
@@ -770,12 +794,33 @@ button {
   font-size: 12px;
 }
 
+.site-footer .riot-disclaimer {
+  max-width: 720px;
+  color: #687185;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
 .footer-meta {
   display: flex;
   gap: 28px;
   color: var(--muted);
   font: 400 10px/1 var(--font-mono);
 }
+
+.footer-meta a { color: inherit; }
+
+.legal-page {
+  width: min(840px, calc(100% - 32px));
+  min-height: calc(100vh - 240px);
+  margin: 0 auto;
+  padding: 88px 0 120px;
+}
+
+.legal-page h1 { margin: 24px 0 40px; font-size: clamp(44px, 8vw, 82px); }
+.legal-page h2 { margin: 38px 0 12px; font-size: 22px; }
+.legal-page p { color: var(--muted); line-height: 1.75; }
+.legal-page .text-link { display: inline-block; margin-top: 40px; color: var(--cyan); }
 
 /* Analysis */
 .analysis-shell {
@@ -938,6 +983,8 @@ button {
   border-radius: 50%;
   animation: rotate 1.8s linear infinite;
 }
+
+.idle-state .loading-orbit { animation: none; opacity: .55; }
 
 .loading-orbit::before {
   content: "";
@@ -1733,7 +1780,7 @@ tr:last-child td { border-bottom: 0; }
   .growth-empty { padding: 48px 20px; }
   :root { --site-width: calc(100% - 28px); }
   .site-header { height: 72px; }
-  .brand-mark { width: 36px; height: 36px; }
+  .brand-mark { width: 48px; height: 36px; font-size: 10px; }
   .main-nav.open {
     top: 71px;
     left: 0;
@@ -1750,6 +1797,7 @@ tr:last-child td { border-bottom: 0; }
   .search-control { height: auto; grid-template-columns: 42px 1fr; }
   .search-control input { height: 58px; }
   .search-control button { grid-column: 1 / -1; height: 52px; margin: 0 -1px -1px; }
+  .region-field { grid-template-columns: 1fr; gap: 8px; }
   .hero-visual { min-height: 500px; margin: 0 -10px; transform: scale(.9); }
   .radar-grid { width: 430px; height: 430px; }
   .visual-note { display: none; }

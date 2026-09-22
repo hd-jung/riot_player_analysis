@@ -1,1 +1,1 @@
-"""Application services for Rift Signal."""
+"""Application services for GameLevel PT."""

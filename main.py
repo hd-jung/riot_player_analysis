@@ -1,3 +1,6 @@
+from datetime import datetime, timezone
+from typing import Literal
+
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -6,14 +9,13 @@ from pydantic import BaseModel, Field
 
 from app.analytics import analyze_matches
 from app.config import PUBLIC_DIR, TEMPLATES_DIR, riot_api_key
-from app.demo import demo_match_rows, is_demo_riot_id
 from app.riot import RiotAPIError, RiotClient, read_cache, split_riot_id
 
 
 app = FastAPI(
-    title="Rift Signal",
+    title="GameLevel PT",
     description="A high-rank benchmark and personal League of Legends training routine app.",
-    version="1.3.6",
+    version="1.4.0",
 )
 
 # Vercel serves files under public/ from its CDN. These mounts keep local
@@ -35,6 +37,7 @@ async def favicon():
 class AnalyzeRequest(BaseModel):
     riot_id: str = Field(min_length=3, max_length=40)
     match_count: int = Field(default=10, ge=3, le=20)
+    routing: Literal["americas", "europe", "asia", "sea"] = "asia"
     refresh: bool = False
 
 
@@ -50,13 +53,14 @@ async def home(request: Request):
 @app.get("/analysis", response_class=HTMLResponse)
 async def analysis_page(
     request: Request,
-    riot_id: str = Query(default="dummy_player#KR1"),
+    riot_id: str = Query(default=""),
     count: int = Query(default=10, ge=3, le=20),
+    region: Literal["americas", "europe", "asia", "sea"] = Query(default="asia"),
 ):
     return templates.TemplateResponse(
         request=request,
         name="analysis.html",
-        context={"page": "analysis", "riot_id": riot_id, "count": count},
+        context={"page": "analysis", "riot_id": riot_id, "count": count, "region": region},
     )
 
 
@@ -66,6 +70,15 @@ async def growth_page(request: Request):
         request=request,
         name="growth.html",
         context={"page": "growth"},
+    )
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="privacy.html",
+        context={"page": "privacy"},
     )
 
 
@@ -90,12 +103,6 @@ async def analyze(payload: AnalyzeRequest):
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    if is_demo_riot_id(payload.riot_id):
-        result = analyze_matches(demo_match_rows()[:10], "dummy_player#KR1")
-        result["source"] = "demo"
-        result["demo"] = True
-        return result
-
     rows = []
     source = "cache"
     if not payload.refresh:
@@ -112,7 +119,7 @@ async def analyze(payload: AnalyzeRequest):
                 ),
             )
         try:
-            rows = await RiotClient(key).collect(payload.riot_id, payload.match_count)
+            rows = await RiotClient(key, payload.routing).collect(payload.riot_id, payload.match_count)
             source = "live"
         except RiotAPIError as exc:
             cached = read_cache(game_name, tag_line)
@@ -127,4 +134,6 @@ async def analyze(payload: AnalyzeRequest):
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     result["source"] = source
+    result["routing"] = payload.routing
+    result["analyzed_at"] = datetime.now(timezone.utc).isoformat()
     return result

@@ -1,27 +1,34 @@
 {% extends "base.html" %}
-{% block title %}Player Analysis — Rift Signal{% endblock %}
+{% block title %}Player Analysis — GameLevel PT{% endblock %}
 
 {% block content %}
-<section class="analysis-shell" id="analysis-app" data-riot-id="{{ riot_id }}" data-count="{{ count }}">
+<section class="analysis-shell" id="analysis-app" data-riot-id="{{ riot_id }}" data-count="{{ count }}" data-region="{{ region }}">
   <aside class="analysis-sidebar">
     <div class="eyebrow"><span>LIVE</span> PLAYER LOOKUP</div>
     <h1>Player<br>Analysis</h1>
     <p>Compare recent ranked performance with your high-rank role cohort and build a seven-day practice plan.</p>
     <form id="analysis-search" class="sidebar-form">
       <label for="analysis-riot-id">Riot ID</label>
-      <input id="analysis-riot-id" value="{{ riot_id }}" required>
+      <input id="analysis-riot-id" value="{{ riot_id }}" placeholder="GameName#Tag" required>
+      <label for="analysis-region">Account region</label>
+      <select id="analysis-region">
+        <option value="asia" {% if region == 'asia' %}selected{% endif %}>Asia — KR / JP</option>
+        <option value="sea" {% if region == 'sea' %}selected{% endif %}>Southeast Asia</option>
+        <option value="americas" {% if region == 'americas' %}selected{% endif %}>Americas</option>
+        <option value="europe" {% if region == 'europe' %}selected{% endif %}>Europe</option>
+      </select>
       <label for="match-count">Match sample</label>
       <select id="match-count">
         {% for option in [5, 10, 15, 20] %}
           <option value="{{ option }}" {% if option == count %}selected{% endif %}>Last {{ option }} games</option>
         {% endfor %}
       </select>
-      <button type="submit">REFRESH SIGNAL <span>→</span></button>
+      <button type="submit">ANALYZE MATCHES <span>→</span></button>
     </form>
     <div class="sidebar-note">
       <span>DATA SOURCE</span>
       <strong id="data-source">Checking…</strong>
-      <small>Cached results load instantly. Live analysis refreshes through Riot Games.</small>
+      <small id="data-freshness">Submit a Riot ID to request recent match data.</small>
     </div>
   </aside>
 
@@ -41,6 +48,12 @@
       <div class="loading-orbit"><span></span></div>
       <strong>Reading the last matches</strong>
       <p>Champion form, role split, and performance signal are being calculated.</p>
+    </div>
+
+    <div class="loading-state idle-state" id="idle-state" hidden>
+      <div class="loading-orbit"><span></span></div>
+      <strong>Enter your Riot ID to begin</strong>
+      <p>Select the account region, choose a match sample, and build your personal training routine.</p>
     </div>
 
     <div class="error-state" id="error-state" hidden>

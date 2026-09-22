@@ -1,9 +1,10 @@
-# Rift Signal v1.3.6
+# GameLevel PT v1.4.0
 
 FastAPI 기반 League of Legends 개인 훈련 루틴 서비스입니다. 최근 경기와 같은 주 역할의 KR 최상위 티어 표본을 비교해 우선 과제를 찾고, 실행 가능한 7일 루틴을 만듭니다. 아래 절차는 모두 VS Code 안에서 진행할 수 있습니다.
 
 - GitHub: <https://github.com/hd-jung/riot_player_analysis>
-- Vercel: <https://riot-player-analysis.vercel.app>
+- Production: <https://gamelevelpt.com>
+- Legacy URL: <https://riot-player-analysis.vercel.app> (정식 도메인으로 리디렉션)
 
 ## 서비스가 만드는 것
 
@@ -21,13 +22,13 @@ Riot ID를 입력하면 최근 경기에서 승률, KDA, 분당 CS, 평균 데�
 
 기준 데이터는 프로 선수 경기 데이터가 아니며 코칭 결과를 보장하지 않습니다. 현재 포함된 정적 최상위 티어 표본을 방향성 기준으로 사용하고, 사용자 표본이 적을 때는 신뢰도를 `early` 또는 `medium`으로 표시합니다.
 
-## 검수용 데모 계정
+## 실제 운영 원칙
 
-```text
-dummy_player#KR1
-```
-
-이 Riot ID는 실제 Riot 계정이나 API 키를 사용하지 않습니다. 입력하면 최근 한 달간의 분석 체크포인트 5개, 훈련 기록 20일 이상, 현재 진행 중인 7일 루틴과 점진적인 경기 지표 성장 추이가 브라우저에 자동 생성됩니다. 다른 Riot ID의 실제 기록과는 분리됩니다.
+- 공개 서비스에는 더미 Riot ID나 가공한 경기 기록을 노출하지 않습니다.
+- 사용자가 입력한 실제 Riot ID의 최근 랭크 경기만 Riot API 또는 해당 요청의 캐시에서 조회합니다.
+- 분석 결과에는 데이터 출처, 계정 지역과 분석 시각을 표시합니다.
+- 훈련 완료 기록과 성장 히스토리는 사용자의 브라우저에만 저장됩니다.
+- 해외 계정은 분석 화면에서 Americas, Europe, Asia, Southeast Asia 중 실제 계정 지역을 선택합니다.
 
 ## 1. VS Code에서 프로젝트 열기
 
@@ -266,7 +267,7 @@ vercel --prod
 그래도 실패하면 최근 함수 로그를 확인합니다.
 
 ```cmd
-vercel logs https://riot-player-analysis.vercel.app --since 30m --no-follow
+vercel logs https://gamelevelpt.com --since 30m --no-follow
 ```
 
 ### `'vercel'은(는) 내부 또는 외부 명령이 아닙니다`
@@ -298,13 +299,24 @@ vercel env update RIOT_API_KEY production --sensitive
 
 ## 11. 공개 운영 전 권장 사항
 
-Riot 개발 키는 24시간짜리 테스트용입니다. 서비스를 계속 공개 운영하려면 Riot Production API Key를 신청하는 것이 좋습니다. 승인받은 운영 키로 전환하면 매일 개발 키를 교체하는 절차가 필요하지 않습니다.
+Riot 개발 키는 24시간짜리 테스트용이며 공개 서비스 운영용이 아닙니다. 서비스를 계속 공개 운영하려면 Riot 제품을 등록하고 Production API Key 승인을 받아야 합니다. 승인받은 운영 키로 전환하면 매일 개발 키를 교체하는 절차가 필요하지 않습니다.
+
+## 12. 심사 자료 준비 체크리스트
+
+1. `https://gamelevelpt.com` 주소와 HTTPS 잠금 표시가 함께 보이도록 화면을 캡처합니다.
+2. 동의받은 실제 Riot ID와 정확한 계정 지역으로 새 분석을 실행합니다.
+3. 결과 화면의 데이터 출처, 지역, 분석 시각이 보이도록 캡처합니다.
+4. 7일 루틴에서 하루를 완료하고 Growth History 달력에 기록되는 과정을 촬영합니다.
+5. 사용자 Riot ID는 제출 자료에 사용해도 되는지 사전 동의를 받고, 불필요한 개인정보는 가립니다.
+6. Vercel의 도메인 연결 완료 화면과 Riot 제품 등록 또는 운영 키 승인 자료를 별도로 보관합니다.
+7. 과거 운영일이나 이용자 수를 임의로 만들지 않고, 실제 테스트 일시와 결과만 제출합니다.
 
 ## 주요 페이지
 
 - `/`: 영문 랜딩 페이지
 - `/analysis`: Riot ID 기반 비교 분석 및 7일 훈련 루틴
 - `/growth`: 루틴 달력, 성장 추이 및 분석 히스토리
+- `/privacy`: 데이터 사용 및 브라우저 저장 안내
 - `/metrics`: 이전 주소 호환을 위해 `/growth`로 자동 이동
 - `/docs`: FastAPI API 문서
 
