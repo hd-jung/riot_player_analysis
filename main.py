@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -10,14 +10,14 @@ from pydantic import BaseModel, Field
 from app.analytics import analyze_matches, historical_profile
 from app.config import PUBLIC_DIR, TEMPLATES_DIR, riot_api_key
 from app.db import configured as database_configured
-from app.db import cohort_identity, load_cohort_matches, operations_summary, save_analysis, save_completion
+from app.db import cohort_identity, load_cohort_matches, operations_summary, save_analysis, save_cohort_matches, save_completion
 from app.riot import RiotAPIError, RiotClient, read_cache, split_riot_id
 
 
 app = FastAPI(
     title="GameLevel PT",
     description="A high-rank benchmark and personal League of Legends training routine app.",
-    version="1.6.0",
+    version="1.6.1",
 )
 
 # Vercel serves files under public/ from its CDN. These mounts keep local
@@ -132,7 +132,7 @@ async def analyze(payload: AnalyzeRequest):
     source = "cache"
     cohort = cohort_identity(payload.riot_id, payload.routing)
     cohort_rows = load_cohort_matches(cohort["id"]) if cohort and cohort.get("status") == "verified" else []
-    if cohort_rows:
+    if cohort_rows and not payload.refresh:
         rows = cohort_rows
         source = "riot-history-import"
     if not payload.refresh:
@@ -149,8 +149,18 @@ async def analyze(payload: AnalyzeRequest):
                 ),
             )
         try:
-            rows = await RiotClient(key, payload.routing).collect(payload.riot_id, payload.match_count)
-            source = "live"
+            history_start = int((datetime.now(timezone.utc) - timedelta(days=90)).timestamp()) if cohort else None
+            request_count = 100 if cohort else payload.match_count
+            rows = await RiotClient(key, payload.routing).collect(
+                payload.riot_id, request_count, start_time=history_start
+            )
+            if cohort:
+                save_cohort_matches(cohort["id"], rows)
+                cohort_rows = load_cohort_matches(cohort["id"])
+                rows = cohort_rows
+                source = "riot-history-import"
+            else:
+                source = "live"
         except RiotAPIError as exc:
             cached = read_cache(game_name, tag_line)
             if cached:

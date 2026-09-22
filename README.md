@@ -354,6 +354,8 @@ python -m scripts.sync_cohort --riot-id "GameName#Tag" --days 90
 
 여러 계정은 `--riot-id`를 반복해서 지정합니다. Riot 개발 키가 만료되면 Vercel의 `RIOT_API_KEY`를 먼저 갱신해야 하며, 수집에 성공한 계정만 검증 완료로 기록됩니다. `.env.production.local`은 Git에 포함하지 않습니다.
 
+`--sensitive`로 등록한 Vercel 값은 `env pull` 시 실제 키가 복원되지 않습니다. 운영 화면에서 내부 평가 Riot ID를 `Refresh Riot Data`로 조회하면 서버가 운영 키를 사용해 최대 100건의 최근 90일 전적을 자동 적재하므로 로컬 키 복사가 필요하지 않습니다.
+
 ## 프로젝트 구조
 
 ```text
