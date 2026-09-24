@@ -1,4 +1,4 @@
-# GameLevel PT v1.4.0
+# GameLevel PT v1.6.3
 
 FastAPI 기반 League of Legends 개인 훈련 루틴 서비스입니다. 최근 경기와 같은 주 역할의 KR 최상위 티어 표본을 비교해 우선 과제를 찾고, 실행 가능한 7일 루틴을 만듭니다. 아래 절차는 모두 VS Code 안에서 진행할 수 있습니다.
 
@@ -11,6 +11,7 @@ FastAPI 기반 League of Legends 개인 훈련 루틴 서비스입니다. 최근
 Riot ID를 입력하면 최근 경기에서 승률, KDA, 분당 CS, 평균 데스를 계산합니다. 같은 주 역할의 KR Master·Grandmaster·Challenger 표본과 비교한 뒤 격차가 큰 항목을 우선순위로 정해 다음 내용을 제공합니다.
 
 - 개인별 핵심 개선 과제 최대 3개
+- 분석 직후 바로 수행할 수 있는 1회성 45분 Quick Session
 - 매일 할 일과 측정 목표가 있는 7일 훈련 일정
 - 추천 챔피언을 활용한 집중 랭크 세션
 - 7일차 재측정 및 다음 주 조정 안내

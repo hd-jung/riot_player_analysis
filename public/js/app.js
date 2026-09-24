@@ -296,6 +296,25 @@ if (analysisApp) {
       })
       .join("");
 
+    const quickSession = data.quick_session;
+    document.querySelector("#quick-session-title").textContent = quickSession.title;
+    document.querySelector("#quick-session-duration").textContent = `${quickSession.estimated_minutes} MIN`;
+    document.querySelector("#quick-session-reason").textContent = quickSession.reason;
+    document.querySelector("#quick-session-role").textContent = quickSession.primary_role;
+    document.querySelector("#quick-session-pick").textContent = quickSession.primary_pick;
+    document.querySelector("#quick-session-focus").textContent = quickSession.focus_label;
+    document.querySelector("#quick-session-target").textContent = quickSession.target;
+    document.querySelector("#quick-session-steps").innerHTML = quickSession.steps
+      .map((step) => `
+        <article class="quick-session-step">
+          <span class="quick-session-index">${String(step.order).padStart(2, "0")}</span>
+          <div>
+            <span>${escapeHtml(step.phase)} · ${step.minutes} MIN</span>
+            <p>${escapeHtml(step.instruction)}</p>
+          </div>
+        </article>`)
+      .join("");
+
     const routine = data.training_plan;
     const routineKey = `rift-routine:${data.riot_id.toLowerCase()}`;
     let routineState = { completed: {}, startedAt: new Date().toISOString() };

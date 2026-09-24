@@ -170,6 +170,11 @@ def analyze_matches(rows: list[dict[str, Any]], riot_id: str) -> dict[str, Any]:
         benchmark=benchmark,
         recommendations=recommendations,
     )
+    quick_session = _quick_session(
+        summary={"favorite_role": favorite_role},
+        benchmark=benchmark,
+        recommendations=recommendations,
+    )
 
     return {
         "riot_id": riot_id,
@@ -190,6 +195,7 @@ def analyze_matches(rows: list[dict[str, Any]], riot_id: str) -> dict[str, Any]:
         "recommendations": recommendations,
         "recent_matches": recent,
         "benchmark": benchmark,
+        "quick_session": quick_session,
         "training_plan": training_plan,
     }
 
@@ -342,6 +348,86 @@ def _training_plan(
         "schedule": schedule,
         "completion_storage": "browser",
         "retest_after_days": 7,
+    }
+
+
+def _quick_session(
+    summary: dict[str, Any],
+    benchmark: dict[str, Any],
+    recommendations: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build one focused session that can be completed immediately."""
+    comparisons = sorted(
+        benchmark["comparisons"], key=lambda item: item["gap_score"], reverse=True
+    )
+    focus = next((item for item in comparisons if item["gap_score"] > 0), comparisons[0])
+    primary_pick = recommendations[0]["champion"] if recommendations else "your comfort pick"
+
+    session_guides = {
+        "avg_cs_min": {
+            "title": "CS pace reset",
+            "target": f"Reach at least {focus['target']} CS/min in the ranked game",
+            "steps": [
+                ("Warm-up", 10, "Use Practice Tool and record CS at 5 and 10 minutes."),
+                ("Focused queue", 30, f"Play one ranked game on {primary_pick}. Prioritize the next two safe waves before roaming."),
+                ("Review", 5, "Write down CS at 10 minutes and one wave you could have collected safely."),
+            ],
+        },
+        "avg_deaths": {
+            "title": "Survival reset",
+            "target": f"Finish the ranked game with {focus['target']} deaths or fewer",
+            "steps": [
+                ("Pre-game review", 5, "Review the first death from the most recent loss and name one safer exit."),
+                ("Focused queue", 30, f"Play one ranked game on {primary_pick}. Check vision, ally count, and exit path before every commit."),
+                ("Review", 10, "Label every death as avoidable or necessary and write one rule for the next game."),
+            ],
+        },
+        "avg_kda": {
+            "title": "Fight selection reset",
+            "target": f"Finish the session at or above {focus['target']} KDA",
+            "steps": [
+                ("Pre-game review", 5, "Review one recent low-value fight and identify the missing information."),
+                ("Focused queue", 30, f"Play one ranked game on {primary_pick}. Check ally count, key cooldowns, and exit path before fighting."),
+                ("Review", 10, "Review two fights and keep one decision rule that produced the better outcome."),
+            ],
+        },
+        "win_rate": {
+            "title": "Lead conversion reset",
+            "target": "Name the next objective after every recall and review one conversion window",
+            "steps": [
+                ("Set the plan", 5, "Choose one objective rule: after every recall, identify the next neutral objective and setup timer."),
+                ("Focused queue", 30, f"Play one ranked game on {primary_pick}. Spend the next 90 seconds after each recall around the named objective."),
+                ("Review", 10, "Find one lead that became an objective and one lead that was not converted."),
+            ],
+        },
+    }
+    guide = session_guides[focus["key"]]
+    unit = focus["unit"]
+    reason = (
+        f"Your {focus['label'].lower()} is {focus['player']}{unit} versus the "
+        f"{focus['target']}{unit} high-rank role benchmark, making it the clearest "
+        "single-session focus."
+    )
+    steps = [
+        {
+            "order": index + 1,
+            "phase": phase,
+            "minutes": minutes,
+            "instruction": instruction,
+        }
+        for index, (phase, minutes, instruction) in enumerate(guide["steps"])
+    ]
+    return {
+        "title": guide["title"],
+        "reason": reason,
+        "primary_role": summary["favorite_role"],
+        "primary_pick": primary_pick,
+        "focus_key": focus["key"],
+        "focus_label": focus["label"],
+        "target": guide["target"],
+        "estimated_minutes": sum(step["minutes"] for step in steps),
+        "steps": steps,
+        "completion_storage": "none",
     }
 
 
